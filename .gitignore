@@ -1,9 +1,11 @@
 # compiled output
 /dist
 /node_modules
+.env
+/postgres
 
 # Logs
-logs
+# logs
 *.log
 npm-debug.log*
 pnpm-debug.log*
