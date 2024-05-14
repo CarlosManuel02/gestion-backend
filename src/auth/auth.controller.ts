@@ -32,7 +32,7 @@ export class AuthController {
     return this.authService.login(createAuthDto);
   }
 
-  @UseGuards(AuthGuard())
+  // @UseGuards(AuthGuard())
   @Get('/all')
   findAll(@Query() pagination: PaginationDto) {
     return this.authService.findAll(pagination);

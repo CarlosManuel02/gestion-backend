@@ -10,7 +10,6 @@ import {
 } from "class-validator";
 
 export class CreateAuthDto {
-  @IsInt()
   @IsPositive()
   @IsOptional()
   id?: string;
@@ -33,9 +32,6 @@ export class CreateAuthDto {
   @IsOptional()
   role?: string;
 
-  @IsOptional()
-  @IsDate()
-  lastLogin?: Date;
 
   @IsString()
   @IsOptional()

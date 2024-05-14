@@ -49,7 +49,6 @@ export class AuthService {
       const token = await this.generateJWT(createAuthDto);
 
       const auth = this.authRepository.create(createAuthDto);
-      auth.lastLogin = new Date();
       await this.authRepository.save(auth).then(async (user) => {
         await this.logService.create(user.id, 'User created');
       });
@@ -162,7 +161,6 @@ export class AuthService {
 
     if (user && (await user.validatePassword(password))) {
       const token = await this.generateJWT(user);
-      user.lastLogin = new Date();
       await this.authRepository.save(user).then(async (user) => {
         await this.logService.create(user.id, 'User logged in');
       });
