@@ -164,9 +164,13 @@ export class AuthService {
       await this.authRepository.save(user).then(async (user) => {
         await this.logService.create(user.id, 'User logged in');
       });
-      // await this.createLog(user);
       return {
-        user: user,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        },
         token,
         status: 200,
       };
@@ -186,7 +190,12 @@ export class AuthService {
     if (!user) throw new NotFoundException('User not found');
     const newToken = await this.generateJWT(user);
     return {
-      user: user,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
       token: newToken,
       status: 200,
     };
