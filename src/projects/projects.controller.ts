@@ -10,6 +10,7 @@ import {
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { AddMemberDto } from './dto/add-member.dto';
 
 @Controller('projects')
 export class ProjectsController {
@@ -18,6 +19,11 @@ export class ProjectsController {
   @Post()
   create(@Body() createProjectDto: CreateProjectDto) {
     return this.projectsService.create(createProjectDto);
+  }
+
+  @Post('addMember')
+  addMember(@Body() addMemberDto: AddMemberDto) {
+    return this.projectsService.addMember(addMemberDto);
   }
 
   @Get()

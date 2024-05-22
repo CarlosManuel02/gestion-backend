@@ -1,4 +1,4 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Project } from './entities/project.entity';
@@ -9,6 +9,7 @@ import { Image } from './entities/image.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { ProjectMenbers } from './entities/projectMenbers.entity';
 import { isUUID } from 'class-validator';
+import { AddMemberDto } from './dto/add-member.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -40,7 +41,7 @@ export class ProjectsService {
       await this.projectRepository.save(project).then(() => {
         if (createProjectDto.members) {
           createProjectDto.members.forEach((member) => {
-            this.addMemberToProject(project, member);
+            this.addMemberToProject(project.id, member);
             console.log(member);
           });
         }
@@ -71,7 +72,7 @@ export class ProjectsService {
         };
       }
     } catch (e) {
-      throw new NotFoundException(`Project with term ${term} not found`)
+      throw new NotFoundException(`Project with term ${term} not found`);
     }
 
     return project;
@@ -86,17 +87,34 @@ export class ProjectsService {
   }
 
   async addMemberToProject(
-    project: Project,
+    project_id: string,
     member: { id: string; role: string },
   ) {
-    const projectMenber = this.projectMenbersRepository.create({
-      project_id: project.id,
+    const memberExists = await this.projectMenbersRepository.findOne({
+      where: { project_id: project_id, user_id: member.id },
+    });
+    if (memberExists) {
+      return {
+        message: `User with id ${member.id} already exists in project with id ${project_id}`,
+      };
+    }
+
+    const projectMember = this.projectMenbersRepository.create({
+      project_id: project_id,
       user_id: member.id,
       role: member.role,
     });
-    await this.projectMenbersRepository.save(projectMenber).then((res) => {
-      console.log(res);
-    });
+    try {
+      await this.projectMenbersRepository.save(projectMember).then((res) => {
+        return {
+          message: `User with id ${member.id} added to project with id ${project_id}`,
+          res,
+        };
+      });
+    } catch (error) {
+      console.log(error);
+      return error;
+    }
   }
 
   private async getProjectDetails(term: string, isUUID: boolean) {
@@ -107,5 +125,9 @@ export class ProjectsService {
       return await this.projectRepository.query(`SELECT *
                                                  FROM get_project_details(NULL, '${term}')`);
     }
+  }
+
+  addMember(addMemberDto: AddMemberDto) {
+    return this.addMemberToProject(addMemberDto.project_id, addMemberDto);
   }
 }
