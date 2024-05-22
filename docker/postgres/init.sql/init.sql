@@ -107,7 +107,7 @@ BEGIN
                                'member_id', u.id,
                                'member_username', u.username,
                                'member_email', u.email,
-                               'member_role', u.role
+                               'member_role', pm.role
                        )
                ) AS members
         FROM projects p
