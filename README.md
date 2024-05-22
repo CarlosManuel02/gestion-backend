@@ -32,18 +32,6 @@
 $ yarn install
 ```
 
-## Configuration
-
-Create a .env file in the root of the project and copy the content of the .env.example file. Then, fill the variables with the correct values.
-
-## Database
-
-The database used in this project is PostgreSQL. You can use a docker container to run the database. To do this, run the following command:
-
-```bash
-docker-compose up -d
-```
-
 ## Running the app
 
 ```bash
@@ -57,3 +45,80 @@ $ yarn run start:dev
 $ yarn run start:prod
 ```
 
+## Test
+
+```bash
+# unit tests
+$ yarn run test
+
+# e2e tests
+$ yarn run test:e2e
+
+# test coverage
+$ yarn run test:cov
+```
+
+## User Authentication
+
+The user authentication is done using JWT, the user can register and login, and the token is used to authenticate the
+user in the requests.
+
+### Register
+
+```bash
+http://localhost:8080/api/auth/new
+```
+
+```json
+{
+    "username": "test",
+    "email": "test@example.com",
+    "password": "12345678"
+}
+```
+
+### Login
+
+```bash
+http://localhost:8080/api/auth/login
+```
+
+```json
+{
+    "username": "test",
+    "password": "12345678"
+}
+```
+
+### Get User Info
+
+```bash
+http://localhost:8080/api/auth/:term
+```
+This request needs the `term` in the endpoint, it can be the username or the email of the user.
+
+
+### Get all Users
+
+```bash
+http://localhost:8080/api/auth/all
+```
+
+
+### Update User
+
+```bash
+http://localhost:8080/api/auth/:id
+```
+
+```json
+{
+    "username": "test2"
+}
+```
+
+### Delete User
+
+```bash
+http://localhost:8080/api/auth/:id
+```
