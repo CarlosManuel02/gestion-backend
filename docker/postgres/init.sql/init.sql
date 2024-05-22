@@ -77,7 +77,7 @@ create TAble project_members
 
 
 
-CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID)
+CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_name_param VARCHAR)
     RETURNS TABLE
             (
                 project_id          UUID,
@@ -88,10 +88,7 @@ CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID)
                 project_end_date    DATE,
                 project_status      VARCHAR,
                 project_image_url   TEXT,
-                member_id           UUID,
-                member_username     VARCHAR,
-                member_email        VARCHAR,
-                member_role         VARCHAR
+                members             JSONB
             )
 AS
 $$
@@ -105,21 +102,23 @@ BEGIN
                p.end_date    AS project_end_date,
                p.status      AS project_status,
                img.url       AS project_image_url,
-               u.id          AS member_id,
-               u.username    AS member_username,
-               u.email       AS member_email,
-               u.role        AS member_role
+               jsonb_agg(
+                       jsonb_build_object(
+                               'member_id', u.id,
+                               'member_username', u.username,
+                               'member_email', u.email,
+                               'member_role', u.role
+                       )
+               ) AS members
         FROM projects p
-                 LEFT JOIN
-             images img ON p.image = img.image_id
-                 LEFT JOIN
-             project_members pm ON p.id = pm.project_id
-                 LEFT JOIN
-             "Users" u ON pm.user_id = u.id
-        WHERE p.id = project_id_param
-        ORDER BY p.id, u.id;
+                 LEFT JOIN images img ON p.image = img.image_id
+                 LEFT JOIN project_members pm ON p.id = pm.project_id
+                 LEFT JOIN "Users" u ON pm.user_id = u.id
+        WHERE (p.id = project_id_param OR p.name = project_name_param)
+        GROUP BY p.id, img.url;
 END;
 $$ LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
     RETURNS TABLE

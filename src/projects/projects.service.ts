@@ -8,6 +8,7 @@ import {Image} from './entities/image.entity';
 
 import {v4 as uuidv4} from 'uuid';
 import {ProjectMenbers} from "./entities/projectMenbers.entity";
+import {isUUID} from "class-validator";
 
 @Injectable()
 export class ProjectsService {
@@ -58,8 +59,26 @@ export class ProjectsService {
     return `This action returns all projects`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} project`;
+  async findOne(term: string) {
+    let project: Project;
+    try {
+      if (isUUID(term)) {
+        project = await this.getProjectDetails(term, true);
+      } else {
+        project = await this.getProjectDetails(term, false);
+      }
+
+      if (!project) {
+        return {
+          message: `Project with term ${term} not found`,
+        }
+      }
+    } catch (e) {
+      throw new Error('No project found with the given term');
+    }
+
+    return project;
+
   }
 
   update(id: number, updateProjectDto: UpdateProjectDto) {
@@ -79,5 +98,15 @@ export class ProjectsService {
     await this.projectMenbersRepository.save(projectMenber).then((res) => {
       console.log(res);
     });
+  }
+
+  private async getProjectDetails(term: string, isUUID: boolean) {
+    if (isUUID) {
+      return await this.projectRepository.query(`SELECT *
+                                                 FROM get_project_details('${term}', NULL)`);
+    } else {
+      return await this.projectRepository.query(`SELECT *
+                                                 FROM get_project_details(NULL, '${term}')`);
+    }
   }
 }
