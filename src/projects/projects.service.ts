@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Image } from './entities/image.entity';
 
 import { v4 as uuidv4 } from 'uuid';
+import {ProjectMenbers} from "./entities/projectMenbers.entity";
 
 @Injectable()
 export class ProjectsService {
@@ -16,6 +17,8 @@ export class ProjectsService {
     private projectRepository: Repository<Project>,
     @InjectRepository(Image)
     private imageRepository: Repository<Image>,
+    @InjectRepository(ProjectMenbers)
+    private projectMenbersRepository: Repository<ProjectMenbers>,
   ) {}
 
   async create(createProjectDto: CreateProjectDto) {
@@ -33,12 +36,15 @@ export class ProjectsService {
     });
     console.log(createProjectDto);
     try {
-      await this.projectRepository.save(project);
-      createProjectDto.members.forEach((member) => {
-        this.projectRepository.query(
-          `Insert into ProjectMembers (project_id, user_id) values ('${project.id}', '${member}')`,
-        );
-      });
+      await this.projectRepository.save(project)
+        .then(() => {
+          if (createProjectDto.members){
+            createProjectDto.members.forEach((member) => {
+              this.addMemberToProject(project, member);
+            });
+          }
+        })
+
     } catch (error) {
       console.log(error);
       return error;
@@ -60,5 +66,15 @@ export class ProjectsService {
 
   remove(id: number) {
     return `This action removes a #${id} project`;
+  }
+
+  private async addMemberToProject(project: Project, member: string) {
+    const projectMenber = this.projectMenbersRepository.create({
+      project_id: project.id,
+      user_id: member,
+    });
+    await this.projectMenbersRepository.save(projectMenber).then((res) => {
+      console.log(res);
+    });
   }
 }

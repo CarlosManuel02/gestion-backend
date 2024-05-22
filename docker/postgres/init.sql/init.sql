@@ -21,12 +21,12 @@ create table "Users"
             primary key,
     username               varchar                         not null,
     email                  varchar                         not null,
-    password               varchar a not null,
+    password               varchar  not null,
     role                   varchar                         not null,
     "lastLogin"            timestamp,
     salt                   varchar                         not null,
     "resetPasswordToken"   varchar,
-    "resetPasswordExpires" timestamp,
+    "resetPasswordExpires" timestamp
 );
 
 alter table "Users"
@@ -44,8 +44,8 @@ CREATE TABLE tasks
     deadline      DATE,
     priority      INTEGER      NOT NULL,
     difficulty    INTEGER      NOT NULL,
-    assignment    INTEGER REFERENCES users (id),
-    project_id    INTEGER REFERENCES projects (project_id)
+    assignment    INTEGER REFERENCES"Users" (id),
+    project_id    INTEGER REFERENCES projects (id)
 );
 
 CREATE TABLE projects
@@ -56,7 +56,7 @@ CREATE TABLE projects
     description TEXT,
     start_date  DATE         NOT NULL,
     end_date    DATE,
-    status      VARCHAR(50)  NOT NULL,
+    status      VARCHAR(50)  NOT NULL
 );
 
 CREATE Table images
@@ -66,9 +66,11 @@ CREATE Table images
 );
 
 
-create TAble ProjectMembers
+create TAble project_members
 (
     project_id uuid ,
     user_id    uuid ,
-    PRIMARY KEY (project_id, user_id)
+    PRIMARY KEY (project_id, user_id),
+    FOREIGN KEY (project_id) REFERENCES projects (id),
+    FOREIGN KEY (user_id) REFERENCES "Users" (id)
 );
