@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { Project } from './entities/project.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Image } from './entities/image.entity';
+import {Injectable} from '@nestjs/common';
+import {CreateProjectDto} from './dto/create-project.dto';
+import {UpdateProjectDto} from './dto/update-project.dto';
+import {Project} from './entities/project.entity';
+import {Repository} from 'typeorm';
+import {InjectRepository} from '@nestjs/typeorm';
+import {Image} from './entities/image.entity';
 
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import {ProjectMenbers} from "./entities/projectMenbers.entity";
 
 @Injectable()
@@ -19,7 +19,8 @@ export class ProjectsService {
     private imageRepository: Repository<Image>,
     @InjectRepository(ProjectMenbers)
     private projectMenbersRepository: Repository<ProjectMenbers>,
-  ) {}
+  ) {
+  }
 
   async create(createProjectDto: CreateProjectDto) {
     const image = this.imageRepository.create({
@@ -38,9 +39,10 @@ export class ProjectsService {
     try {
       await this.projectRepository.save(project)
         .then(() => {
-          if (createProjectDto.members){
+          if (createProjectDto.members) {
             createProjectDto.members.forEach((member) => {
               this.addMemberToProject(project, member);
+              console.log(member)
             });
           }
         })
@@ -68,10 +70,11 @@ export class ProjectsService {
     return `This action removes a #${id} project`;
   }
 
-  private async addMemberToProject(project: Project, member: string) {
+  async addMemberToProject(project: Project, member: { id: string; role: string }) {
     const projectMenber = this.projectMenbersRepository.create({
       project_id: project.id,
-      user_id: member,
+      user_id: member.id,
+      role: member.role,
     });
     await this.projectMenbersRepository.save(projectMenber).then((res) => {
       console.log(res);

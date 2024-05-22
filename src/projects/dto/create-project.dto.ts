@@ -40,9 +40,9 @@ export class CreateProjectDto {
 
   @IsArray()
   @IsNotEmpty()
-  members: string[];
+  members: {id: string, role: string}[];
 
   @IsString()
   @IsNotEmpty()
-  admin: string;
+  owner: string;
 }

@@ -15,6 +15,9 @@ export class Project {
   @Column({ type: 'varchar', length: 255, nullable: false })
   name: string;
 
+  @Column({ type: 'uuid', nullable: false })
+  owner: string;
+
   @ManyToOne(() => Image, { nullable: true })
   @JoinColumn({ name: 'image' })
   image_id: Image;
