@@ -7,6 +7,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { ConfigModule } from '@nestjs/config';
 import { AuthService } from './auth/auth.service';
 import { JwtService } from '@nestjs/jwt';
+import { TasksModule } from './tasks/tasks.module';
+import { ProjectsModule } from './projects/projects.module';
 import * as process from 'process';
 
 @Module({
@@ -32,6 +34,8 @@ import * as process from 'process';
       logging: false,
     }),
     CommonModule,
+    TasksModule,
+    ProjectsModule,
   ],
   controllers: [],
   providers: [AuthService, JwtService],
