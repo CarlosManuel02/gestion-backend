@@ -1,14 +1,14 @@
-import {Injectable} from '@nestjs/common';
-import {CreateProjectDto} from './dto/create-project.dto';
-import {UpdateProjectDto} from './dto/update-project.dto';
-import {Project} from './entities/project.entity';
-import {Repository} from 'typeorm';
-import {InjectRepository} from '@nestjs/typeorm';
-import {Image} from './entities/image.entity';
+import {Injectable, NotFoundException} from '@nestjs/common';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import { Project } from './entities/project.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Image } from './entities/image.entity';
 
-import {v4 as uuidv4} from 'uuid';
-import {ProjectMenbers} from "./entities/projectMenbers.entity";
-import {isUUID} from "class-validator";
+import { v4 as uuidv4 } from 'uuid';
+import { ProjectMenbers } from './entities/projectMenbers.entity';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class ProjectsService {
@@ -20,8 +20,7 @@ export class ProjectsService {
     private imageRepository: Repository<Image>,
     @InjectRepository(ProjectMenbers)
     private projectMenbersRepository: Repository<ProjectMenbers>,
-  ) {
-  }
+  ) {}
 
   async create(createProjectDto: CreateProjectDto) {
     const image = this.imageRepository.create({
@@ -38,16 +37,14 @@ export class ProjectsService {
     });
     console.log(createProjectDto);
     try {
-      await this.projectRepository.save(project)
-        .then(() => {
-          if (createProjectDto.members) {
-            createProjectDto.members.forEach((member) => {
-              this.addMemberToProject(project, member);
-              console.log(member)
-            });
-          }
-        })
-
+      await this.projectRepository.save(project).then(() => {
+        if (createProjectDto.members) {
+          createProjectDto.members.forEach((member) => {
+            this.addMemberToProject(project, member);
+            console.log(member);
+          });
+        }
+      });
     } catch (error) {
       console.log(error);
       return error;
@@ -71,14 +68,13 @@ export class ProjectsService {
       if (!project) {
         return {
           message: `Project with term ${term} not found`,
-        }
+        };
       }
     } catch (e) {
-      throw new Error('No project found with the given term');
+      throw new NotFoundException(`Project with term ${term} not found`)
     }
 
     return project;
-
   }
 
   update(id: number, updateProjectDto: UpdateProjectDto) {
@@ -89,7 +85,10 @@ export class ProjectsService {
     return `This action removes a #${id} project`;
   }
 
-  async addMemberToProject(project: Project, member: { id: string; role: string }) {
+  async addMemberToProject(
+    project: Project,
+    member: { id: string; role: string },
+  ) {
     const projectMenber = this.projectMenbersRepository.create({
       project_id: project.id,
       user_id: member.id,
