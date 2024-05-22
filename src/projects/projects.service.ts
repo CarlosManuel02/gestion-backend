@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ProjectMenbers } from './entities/projectMenbers.entity';
 import { isUUID } from 'class-validator';
 import { AddMemberDto } from './dto/add-member.dto';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class ProjectsService {
@@ -21,6 +22,8 @@ export class ProjectsService {
     private imageRepository: Repository<Image>,
     @InjectRepository(ProjectMenbers)
     private projectMenbersRepository: Repository<ProjectMenbers>,
+
+    private auth: AuthService,
   ) {}
 
   async create(createProjectDto: CreateProjectDto) {
@@ -38,19 +41,31 @@ export class ProjectsService {
     });
     console.log(createProjectDto);
     try {
-      await this.projectRepository.save(project).then(() => {
-        if (createProjectDto.members) {
-          createProjectDto.members.forEach((member) => {
-            this.addMemberToProject(project.id, member);
-            console.log(member);
-          });
-        }
+      await this.projectRepository.save(project).then(async () => {
+        return await this.validateUser(createProjectDto, project);
       });
     } catch (error) {
       console.log(error);
       return error;
     }
     return project;
+  }
+
+  private async validateUser(
+    createProjectDto: CreateProjectDto,
+    project: Project,
+  ) {
+    if (createProjectDto.members) {
+      for (const member of createProjectDto.members) {
+        const user = await this.checkUserExists(member.id);
+        if (!user) {
+          return {
+            message: `User with id ${member.id} not found`,
+          };
+        }
+        await this.addMemberToProject(project.id, member);
+      }
+    }
   }
 
   findAll() {
@@ -129,5 +144,9 @@ export class ProjectsService {
 
   addMember(addMemberDto: AddMemberDto) {
     return this.addMemberToProject(addMemberDto.project_id, addMemberDto);
+  }
+
+  checkUserExists(user_id: string) {
+    return this.auth.findBy(user_id);
   }
 }
