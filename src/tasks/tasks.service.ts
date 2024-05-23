@@ -1,15 +1,56 @@
 import { Injectable } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { Task } from './entities/task.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AuthService } from '../auth/auth.service';
+import { ProjectsService } from '../projects/projects.service';
+import { v4 as uuidv4, validate as isUUID } from 'uuid';
 
 @Injectable()
 export class TasksService {
-  create(createTaskDto: CreateTaskDto) {
-    return 'This action adds a new task';
+  constructor(
+    @InjectRepository(Task)
+    private taskRepository: Repository<Task>,
+    private projectService: ProjectsService,
+    private authService: AuthService,
+  ) {}
+  async create(createTaskDto: CreateTaskDto) {
+    const user = await this.authService.findBy(createTaskDto.assignment);
+    if (!user) {
+      return {
+        message: 'The user does not exist',
+      };
+    }
+    const project = await this.projectService.findOne(createTaskDto.project_id);
+    if (!project) {
+      return {
+        message: 'The project does not exist',
+      };
+    }
+    createTaskDto.creation_date = new Date().toISOString();
+    createTaskDto.assignment = user.id;
+    const task = this.taskRepository.create(createTaskDto);
+    return this.taskRepository.save(task);
   }
 
-  findAll() {
-    return `This action returns all tasks`;
+  async findAll(term: string) {
+    try {
+      if (isUUID(term)) {
+        const tasks = await this.taskRepository.query(
+          `SELECT * FROM get_all_tasks_from_user('${term}', null)`,
+        );
+        return tasks;
+      } else {
+        const tasks = await this.taskRepository.query(
+          `SELECT * FROM get_all_tasks_from_user(null, '${term}')`,
+        );
+        return tasks;
+      }
+    } catch (error) {
+      return error;
+    }
   }
 
   findOne(id: number) {
