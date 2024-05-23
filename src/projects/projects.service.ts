@@ -39,13 +39,11 @@ export class ProjectsService {
       image_id: image,
       ...createProjectDto,
     });
-    console.log(createProjectDto);
     try {
       await this.projectRepository.save(project).then(async () => {
         return await this.validateUser(createProjectDto, project);
       });
     } catch (error) {
-      console.log(error);
       return error;
     }
     return project;
@@ -68,8 +66,15 @@ export class ProjectsService {
     }
   }
 
-  findAll() {
-    return `This action returns all projects`;
+  async findAll(term: string) {
+    try {
+      const projects = await this.projectRepository.query(
+        `SELECT * FROM get_all_projects_from_user('${term}')`,
+      );
+      return projects;
+    } catch (error) {
+      throw new NotFoundException('No projects found');
+    }
   }
 
   async findOne(term: string) {
@@ -127,7 +132,6 @@ export class ProjectsService {
         };
       });
     } catch (error) {
-      console.log(error);
       return error;
     }
   }

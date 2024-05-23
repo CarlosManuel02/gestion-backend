@@ -182,7 +182,6 @@ export class AuthService {
   }
 
   async renewToken(token: string) {
-    console.log(token);
     const payload = await this.jwtService.verify(token, {
       secret: process.env.JWT_SECRET,
     });

@@ -109,7 +109,7 @@ BEGIN
                                'member_email', u.email,
                                'member_role', pm.role
                        )
-               ) AS members
+               )             AS members
         FROM projects p
                  LEFT JOIN images img ON p.image = img.image_id
                  LEFT JOIN project_members pm ON p.id = pm.project_id
@@ -130,7 +130,8 @@ CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
                 project_start_date  DATE,
                 project_end_date    DATE,
                 project_status      VARCHAR,
-                project_image_url   TEXT
+                project_image_url   TEXT,
+                members             JSONB
             )
 AS
 $$
@@ -143,14 +144,21 @@ BEGIN
                p.start_date  AS project_start_date,
                p.end_date    AS project_end_date,
                p.status      AS project_status,
-               img.url       AS project_image_url
+               img.url       AS project_image_url,
+               jsonb_agg(
+                       jsonb_build_object(
+                               'member_id', u.id,
+                               'member_username', u.username,
+                               'member_email', u.email,
+                               'member_role', pm.role
+                       )
+               )             AS members
         FROM projects p
-                 LEFT JOIN
-             images img ON p.image = img.image_id
-                 LEFT JOIN
-             project_members pm ON p.id = pm.project_id
+                 LEFT JOIN images img ON p.image = img.image_id
+                 LEFT JOIN project_members pm ON p.id = pm.project_id
+                 LEFT JOIN "Users" u ON pm.user_id = u.id
         WHERE pm.user_id = user_id_param
-        ORDER BY p.id;
+        GROUP BY p.id, img.url;
 END;
 $$ LANGUAGE plpgsql;
 

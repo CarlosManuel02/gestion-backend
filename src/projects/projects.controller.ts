@@ -26,9 +26,9 @@ export class ProjectsController {
     return this.projectsService.addMember(addMemberDto);
   }
 
-  @Get()
-  findAll() {
-    return this.projectsService.findAll();
+  @Get('all/:term')
+  findAll(@Param('term') term: string) {
+    return this.projectsService.findAll(term);
   }
 
   @Get(':term')
