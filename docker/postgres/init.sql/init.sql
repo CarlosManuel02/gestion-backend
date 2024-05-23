@@ -252,3 +252,39 @@ BEGIN
           AND t.assignment = user_id_param;
 END;
 $$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION get_task_details(task_id_param UUID)
+    RETURNS TABLE
+            (
+                task_id       UUID,
+                task_name     VARCHAR,
+                task_description TEXT,
+                task_status   VARCHAR,
+                task_creation_date DATE,
+                task_deadline DATE,
+                task_priority INTEGER,
+                user_assigned UUID,
+                user_email    VARCHAR,
+                project_id    UUID,
+                project_name  VARCHAR
+            ) AS $$
+BEGIN
+    RETURN QUERY
+        SELECT t.task_id       AS task_id,
+               t.name          AS task_name,
+               t.description   AS task_description,
+               t.status        AS task_status,
+               t.creation_date AS task_creation_date,
+               t.deadline      AS task_deadline,
+               t.priority      AS task_priority,
+               t.assignment    AS user_assigned,
+               u.email         AS user_email,
+               p.id            AS project_id,
+               p.name          AS project_name
+        FROM tasks t
+                 JOIN projects p ON t.project_id = p.id
+                 JOIN "Users" u ON t.assignment = u.id
+        WHERE t.task_id = task_id_param;
+END;
+$$ LANGUAGE plpgsql;

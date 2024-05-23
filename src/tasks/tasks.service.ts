@@ -16,6 +16,7 @@ export class TasksService {
     private projectService: ProjectsService,
     private authService: AuthService,
   ) {}
+
   async create(createTaskDto: CreateTaskDto) {
     const user = await this.authService.findBy(createTaskDto.assignment);
     if (!user) {
@@ -39,12 +40,14 @@ export class TasksService {
     try {
       if (isUUID(term)) {
         const tasks = await this.taskRepository.query(
-          `SELECT * FROM get_all_tasks_from_user('${term}', null)`,
+          `SELECT *
+           FROM get_all_tasks_from_user('${term}', null)`,
         );
         return tasks;
       } else {
         const tasks = await this.taskRepository.query(
-          `SELECT * FROM get_all_tasks_from_user(null, '${term}')`,
+          `SELECT *
+           FROM get_all_tasks_from_user(null, '${term}')`,
         );
         return tasks;
       }
@@ -53,8 +56,26 @@ export class TasksService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} task`;
+  async findOne(term: string) {
+    let task: Task;
+    try {
+      if (isUUID(term)) {
+        task = await this.taskRepository.query(
+          `SELECT *
+         FROM get_task_details('${term}')`,
+        );
+      } else {
+      }
+
+      if (!task) {
+        return {
+          message: 'Task not found',
+        };
+      }
+    } catch (error) {
+      return error;
+    }
+    return task;
   }
 
   update(id: number, updateTaskDto: UpdateTaskDto) {
