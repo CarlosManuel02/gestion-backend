@@ -43,8 +43,21 @@ CREATE TABLE tasks
     deadline      DATE,
     priority      INTEGER      NOT NULL,
     assignment    uuid REFERENCES "Users" (id),
-    project_id    uuid REFERENCES projects (id)
+    project_id    uuid REFERENCES projects (id),
 );
+
+CREATE TABLE Attachments
+(
+    id        UUID DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    task_id   UUID                            NOT NULL
+        REFERENCES tasks (task_id)
+            ON DELETE CASCADE,
+    file_name VARCHAR                         NOT NULL,
+    data      BYTEA                           NOT NULL,
+    mime_type VARCHAR                         NOT NULL
+);
+
+
 
 CREATE TABLE projects
 (
@@ -165,15 +178,17 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION get_all_tasks_from_project(project_id_param uuid)
     RETURNS TABLE
             (
-                task_id       UUID,
-                task_name     VARCHAR,
-                task_description TEXT,
-                task_status   VARCHAR,
+                task_id            UUID,
+                task_name          VARCHAR,
+                task_description   TEXT,
+                task_status        VARCHAR,
                 task_creation_date DATE,
-                task_deadline DATE,
-                task_priority INTEGER,
-                task_assignment UUID
-            ) AS $$
+                task_deadline      DATE,
+                task_priority      INTEGER,
+                task_assignment    UUID
+            )
+AS
+$$
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
@@ -193,17 +208,19 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION get_all_tasks_from_user(user_id_param uuid, user_email_param VARCHAR)
     RETURNS TABLE
             (
-                task_id       UUID,
-                task_name     VARCHAR,
-                task_description TEXT,
-                task_status   VARCHAR,
+                task_id            UUID,
+                task_name          VARCHAR,
+                task_description   TEXT,
+                task_status        VARCHAR,
                 task_creation_date DATE,
-                task_deadline DATE,
-                task_priority INTEGER,
-                task_assignment UUID,
-                project_id    UUID,
-                project_name  VARCHAR
-            ) AS $$
+                task_deadline      DATE,
+                task_priority      INTEGER,
+                task_assignment    UUID,
+                project_id         UUID,
+                project_name       VARCHAR
+            )
+AS
+$$
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
@@ -218,7 +235,7 @@ BEGIN
                p.name          AS project_name
         FROM tasks t
                  JOIN projects p ON t.project_id = p.id
-                    JOIN "Users" u ON t.assignment = u.id
+                 JOIN "Users" u ON t.assignment = u.id
         WHERE t.assignment = user_id_param
            OR u.email = user_email_param;
 END;
@@ -228,15 +245,17 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION get_all_tasks_from_user_and_project(user_id_param uuid, project_id_param uuid)
     RETURNS TABLE
             (
-                task_id       UUID,
-                task_name     VARCHAR,
-                task_description TEXT,
-                task_status   VARCHAR,
+                task_id            UUID,
+                task_name          VARCHAR,
+                task_description   TEXT,
+                task_status        VARCHAR,
                 task_creation_date DATE,
-                task_deadline DATE,
-                task_priority INTEGER,
-                task_assignment UUID
-            ) AS $$
+                task_deadline      DATE,
+                task_priority      INTEGER,
+                task_assignment    UUID
+            )
+AS
+$$
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
@@ -257,18 +276,20 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION get_task_details(task_id_param UUID)
     RETURNS TABLE
             (
-                task_id       UUID,
-                task_name     VARCHAR,
-                task_description TEXT,
-                task_status   VARCHAR,
+                task_id            UUID,
+                task_name          VARCHAR,
+                task_description   TEXT,
+                task_status        VARCHAR,
                 task_creation_date DATE,
-                task_deadline DATE,
-                task_priority INTEGER,
-                user_assigned UUID,
-                user_email    VARCHAR,
-                project_id    UUID,
-                project_name  VARCHAR
-            ) AS $$
+                task_deadline      DATE,
+                task_priority      INTEGER,
+                user_assigned      UUID,
+                user_email         VARCHAR,
+                project_id         UUID,
+                project_name       VARCHAR
+            )
+AS
+$$
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
@@ -286,5 +307,27 @@ BEGIN
                  JOIN projects p ON t.project_id = p.id
                  JOIN "Users" u ON t.assignment = u.id
         WHERE t.task_id = task_id_param;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION get_all_attachments_from_task(task_id_param UUID)
+    RETURNS TABLE
+            (
+                attachment_id UUID,
+                task_id       UUID,
+                file_name     VARCHAR,
+                data          BYTEA,
+                mime_type     VARCHAR
+            ) AS $$
+BEGIN
+    RETURN QUERY
+        SELECT a.id        AS attachment_id,
+               a.task_id   AS task_id,
+               a.file_name AS file_name,
+               a.data      AS data,
+               a.mime_type AS mime_type
+        FROM Attachments a
+        WHERE a.task_id = task_id_param;
 END;
 $$ LANGUAGE plpgsql;

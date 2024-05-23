@@ -49,7 +49,10 @@ export class TasksService {
           `SELECT *
            FROM get_all_tasks_from_user(null, '${term}')`,
         );
-        return tasks;
+        return {
+          tasks,
+          status: 200,
+        };
       }
     } catch (error) {
       return error;
