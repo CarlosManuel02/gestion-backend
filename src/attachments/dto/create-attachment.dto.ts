@@ -1,4 +1,4 @@
-import {IsUUID, IsString, IsNotEmpty, IsBase64, IsOptional} from 'class-validator';
+import {IsUUID, IsString, IsNotEmpty, IsOptional} from 'class-validator';
 
 export class CreateAttachmentDto {
 
@@ -9,16 +9,4 @@ export class CreateAttachmentDto {
   @IsUUID()
   @IsNotEmpty()
   task_id: string;
-
-  @IsString()
-  @IsNotEmpty()
-  file_name: string;
-
-  @IsBase64()
-  @IsNotEmpty()
-  data: string;
-
-  @IsString()
-  @IsNotEmpty()
-  mime_type: string;
 }

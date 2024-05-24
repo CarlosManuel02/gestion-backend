@@ -1,17 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile} from '@nestjs/common';
 import { AttachmentsService } from './attachments.service';
 import { CreateAttachmentDto } from './dto/create-attachment.dto';
 import { UpdateAttachmentDto } from './dto/update-attachment.dto';
+import {FileInterceptor} from "@nestjs/platform-express";
 
 @Controller('attachments')
 export class AttachmentsController {
   constructor(private readonly attachmentsService: AttachmentsService) {}
 
   @Post()
-  create(@Body() createAttachmentDto: CreateAttachmentDto) {
-    return this.attachmentsService.create(createAttachmentDto);
+  @UseInterceptors(FileInterceptor('file')) // Aquí se define el nombre del campo del formulario que contiene el archivo
+  create(@UploadedFile() file, @Body() createAttachmentDto: CreateAttachmentDto) {
+    return this.attachmentsService.create(file, createAttachmentDto);
   }
-
   @Get()
   findAll() {
     return this.attachmentsService.findAll();

@@ -1,69 +1,56 @@
--- auto-generated definition
-create table "Logs"
+CREATE TABLE Logs
 (
-    id          uuid default uuid_generate_v4() not null
-        constraint "PK_69e142ffa0889d451f768edce3e"
-            primary key,
-    user_id     varchar                         not null,
-    action      varchar                         not null,
-    "createdAt" timestamp
+    id         UUID DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    user_id    VARCHAR                         NOT NULL,
+    action     VARCHAR                         NOT NULL,
+    created_at TIMESTAMP
 );
 
-alter table "Logs"
-    owner to root;
+ALTER TABLE Logs
+    OWNER TO root;
 
-
--- auto-generated definition
-create table "Users"
+CREATE TABLE Users
 (
-    id                     uuid default uuid_generate_v4() not null
-        constraint "PK_16d4f7d636df336db11d87413e3"
-            primary key,
-    username               varchar                         not null,
-    email                  varchar                         not null,
-    password               varchar                         not null,
-    "lastLogin"            timestamp,
-    salt                   varchar                         not null,
-    "resetPasswordToken"   varchar,
-    "resetPasswordExpires" timestamp
+    id                     UUID DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    username               VARCHAR                         NOT NULL,
+    email                  VARCHAR                         NOT NULL,
+    password               VARCHAR                         NOT NULL,
+    last_login             TIMESTAMP,
+    salt                   VARCHAR                         NOT NULL,
+    reset_password_token   VARCHAR,
+    reset_password_expires TIMESTAMP
 );
 
-alter table "Users"
-    owner to root;
+ALTER TABLE Users
+    OWNER TO root;
 
-
--- auto-generated definition
 CREATE TABLE tasks
 (
-    task_id       uuid PRIMARY KEY,
+    task_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name          VARCHAR(255) NOT NULL,
     description   TEXT,
     status        VARCHAR(50)  NOT NULL,
     creation_date DATE         NOT NULL,
     deadline      DATE,
     priority      INTEGER      NOT NULL,
-    assignment    uuid REFERENCES "Users" (id),
-    project_id    uuid REFERENCES projects (id),
+    assignment    UUID REFERENCES Users (id),
+    project_id    UUID REFERENCES projects (id)
 );
 
-CREATE TABLE Attachments
-(
-    id        UUID DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
-    task_id   UUID                            NOT NULL
-        REFERENCES tasks (task_id)
-            ON DELETE CASCADE,
-    file_name VARCHAR                         NOT NULL,
-    data      BYTEA                           NOT NULL,
-    mime_type VARCHAR                         NOT NULL
+CREATE TABLE Attachments (
+    id UUID DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    task_id UUID NOT NULL REFERENCES tasks (task_id) ON DELETE CASCADE,
+    file_name VARCHAR NOT NULL,
+    data BYTEA NOT NULL,
+    mime_type VARCHAR NOT NULL,
+    created_at TIMESTAMP DEFAULT now()
 );
-
-
 
 CREATE TABLE projects
 (
     id          SERIAL PRIMARY KEY,
     name        VARCHAR(255) NOT NULL,
-    owner       uuid REFERENCES "Users" (id),
+    owner       UUID REFERENCES Users (id),
     image       TEXT REFERENCES images (image_id),
     description TEXT,
     start_date  DATE         NOT NULL,
@@ -71,23 +58,19 @@ CREATE TABLE projects
     status      VARCHAR(50)  NOT NULL
 );
 
-CREATE Table images
+CREATE TABLE images
 (
     image_id SERIAL PRIMARY KEY,
     url      TEXT NOT NULL
 );
 
-
-create TAble project_members
+CREATE TABLE project_members
 (
-    id         uuid default uuid_generate_v4(),
-    project_id uuid,
-    user_id    uuid,
-    role       VARCHAR(50) NOT NULL,
-    PRIMARY KEY (id)
+    id         UUID DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    project_id UUID REFERENCES projects (id),
+    user_id    UUID REFERENCES Users (id),
+    role       VARCHAR(50)                     NOT NULL
 );
-
-
 
 CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_name_param VARCHAR)
     RETURNS TABLE
@@ -101,9 +84,7 @@ CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_na
                 project_status      VARCHAR,
                 project_image_url   TEXT,
                 members             JSONB
-            )
-AS
-$$
+            ) AS $$
 BEGIN
     RETURN QUERY
         SELECT p.id          AS project_id,
@@ -125,12 +106,11 @@ BEGIN
         FROM projects p
                  LEFT JOIN images img ON p.image = img.image_id
                  LEFT JOIN project_members pm ON p.id = pm.project_id
-                 LEFT JOIN "Users" u ON pm.user_id = u.id
+                 LEFT JOIN Users u ON pm.user_id = u.id
         WHERE (p.id = project_id_param OR p.name = project_name_param)
         GROUP BY p.id, img.url;
 END;
 $$ LANGUAGE plpgsql;
-
 
 CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
     RETURNS TABLE
@@ -144,9 +124,7 @@ CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
                 project_status      VARCHAR,
                 project_image_url   TEXT,
                 members             JSONB
-            )
-AS
-$$
+            ) AS $$
 BEGIN
     RETURN QUERY
         SELECT p.id          AS project_id,
@@ -168,14 +146,13 @@ BEGIN
         FROM projects p
                  LEFT JOIN images img ON p.image = img.image_id
                  LEFT JOIN project_members pm ON p.id = pm.project_id
-                 LEFT JOIN "Users" u ON pm.user_id = u.id
+                 LEFT JOIN Users u ON pm.user_id = u.id
         WHERE pm.user_id = user_id_param
         GROUP BY p.id, img.url;
 END;
 $$ LANGUAGE plpgsql;
 
-
-CREATE OR REPLACE FUNCTION get_all_tasks_from_project(project_id_param uuid)
+CREATE OR REPLACE FUNCTION get_all_tasks_from_project(project_id_param UUID)
     RETURNS TABLE
             (
                 task_id            UUID,
@@ -186,9 +163,7 @@ CREATE OR REPLACE FUNCTION get_all_tasks_from_project(project_id_param uuid)
                 task_deadline      DATE,
                 task_priority      INTEGER,
                 task_assignment    UUID
-            )
-AS
-$$
+            ) AS $$
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
@@ -204,8 +179,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
-CREATE OR REPLACE FUNCTION get_all_tasks_from_user(user_id_param uuid, user_email_param VARCHAR)
+CREATE OR REPLACE FUNCTION get_all_tasks_from_user(user_id_param UUID, user_email_param VARCHAR)
     RETURNS TABLE
             (
                 task_id            UUID,
@@ -218,9 +192,7 @@ CREATE OR REPLACE FUNCTION get_all_tasks_from_user(user_id_param uuid, user_emai
                 task_assignment    UUID,
                 project_id         UUID,
                 project_name       VARCHAR
-            )
-AS
-$$
+            ) AS $$
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
@@ -235,14 +207,13 @@ BEGIN
                p.name          AS project_name
         FROM tasks t
                  JOIN projects p ON t.project_id = p.id
-                 JOIN "Users" u ON t.assignment = u.id
+                 JOIN Users u ON t.assignment = u.id
         WHERE t.assignment = user_id_param
            OR u.email = user_email_param;
 END;
 $$ LANGUAGE plpgsql;
 
-
-CREATE OR REPLACE FUNCTION get_all_tasks_from_user_and_project(user_id_param uuid, project_id_param uuid)
+CREATE OR REPLACE FUNCTION get_all_tasks_from_user_and_project(user_id_param UUID, project_id_param UUID)
     RETURNS TABLE
             (
                 task_id            UUID,
@@ -253,9 +224,8 @@ CREATE OR REPLACE FUNCTION get_all_tasks_from_user_and_project(user_id_param uui
                 task_deadline      DATE,
                 task_priority      INTEGER,
                 task_assignment    UUID
-            )
-AS
-$$
+            ) AS $$
+
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
@@ -272,7 +242,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
 CREATE OR REPLACE FUNCTION get_task_details(task_id_param UUID)
     RETURNS TABLE
             (
@@ -287,9 +256,7 @@ CREATE OR REPLACE FUNCTION get_task_details(task_id_param UUID)
                 user_email         VARCHAR,
                 project_id         UUID,
                 project_name       VARCHAR
-            )
-AS
-$$
+            ) AS $$
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
@@ -305,7 +272,7 @@ BEGIN
                p.name          AS project_name
         FROM tasks t
                  JOIN projects p ON t.project_id = p.id
-                 JOIN "Users" u ON t.assignment = u.id
+                 JOIN Users u ON t.assignment = u.id
         WHERE t.task_id = task_id_param;
 END;
 $$ LANGUAGE plpgsql;
@@ -331,3 +298,4 @@ BEGIN
         WHERE a.task_id = task_id_param;
 END;
 $$ LANGUAGE plpgsql;
+

@@ -14,8 +14,19 @@ export class AttachmentsService {
     private attachmentRepository: Repository<Attachment>
   ) {
   }
-  create(createAttachmentDto: CreateAttachmentDto) {
-    return createAttachmentDto
+  async create(file, createAttachmentDto: CreateAttachmentDto) {
+    const attachment = this.attachmentRepository.create({
+      task_id: createAttachmentDto.task_id,
+      file_name: file.originalname,
+      mime_type: file.mimetype,
+      data: file.buffer
+    });
+
+    await this.attachmentRepository.save(attachment);
+    return {
+      message: 'This action adds a new attachment',
+      attachment: attachment
+    }
   }
 
   findAll() {
