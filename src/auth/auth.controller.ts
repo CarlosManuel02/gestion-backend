@@ -9,6 +9,8 @@ import {
   Query,
   Req,
   UseGuards,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
@@ -17,14 +19,16 @@ import { PaginationDto } from '../common/dtos/pagination.dto';
 import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('new')
-  Register(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @UseInterceptors(FileInterceptor('file')) // Aquí se define el nombre del campo del formulario que contiene el archivo
+  Register(@UploadedFile() file, @Body() createAuthDto: CreateAuthDto) {
+    return this.authService.create(createAuthDto, file);
   }
 
   @Post('login')

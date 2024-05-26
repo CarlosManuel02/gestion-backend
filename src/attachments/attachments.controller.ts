@@ -19,7 +19,7 @@ export class AttachmentsController {
   constructor(private readonly attachmentsService: AttachmentsService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file')) // Aquí se define el nombre del campo del formulario que contiene el archivo
+  @UseInterceptors(FileInterceptor('file'))
   create(
     @UploadedFile() file,
     @Body() createAttachmentDto: CreateAttachmentDto,

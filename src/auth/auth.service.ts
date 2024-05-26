@@ -16,18 +16,21 @@ import { JwtService } from '@nestjs/jwt';
 import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { LogsService } from '../common/logs/logs.service';
+import { UserImage } from './entities/user-image.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly authRepository: Repository<User>,
+    @InjectRepository(UserImage)
+    private readonly userImageRepository: Repository<UserImage>,
     private readonly datasource: DataSource,
     private readonly jwtService: JwtService,
     public readonly logService: LogsService,
   ) {}
 
-  async create(createAuthDto: CreateAuthDto) {
+  async create(createAuthDto: CreateAuthDto, file) {
     createAuthDto.id = uuidv4();
 
     createAuthDto.role = 'user';
@@ -51,6 +54,7 @@ export class AuthService {
       const auth = this.authRepository.create(createAuthDto);
       await this.authRepository.save(auth).then(async (user) => {
         await this.logService.create(user.id, 'User created');
+        await this.saveImage(file, user.id);
       });
       return {
         user: auth.id,
@@ -158,11 +162,13 @@ export class AuthService {
   async login(createAuthDto: CreateAuthDto) {
     const { email, password } = createAuthDto;
     const user = await this.findBy(email);
+    let img: { message: string } | UserImage;
 
     if (user && (await user.validatePassword(password))) {
       const token = await this.generateJWT(user);
       await this.authRepository.save(user).then(async (user) => {
         await this.logService.create(user.id, 'User logged in');
+        img = await this.getPerfileImg(user.id);
       });
       return {
         user: {
@@ -170,6 +176,7 @@ export class AuthService {
           username: user.username,
           email: user.email,
           role: user.role,
+          image: img,
         },
         token,
         status: 200,
@@ -277,5 +284,32 @@ export class AuthService {
 
   private genetareCode() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+
+  private async saveImage(
+    file: { buffer: any; mimetype: any },
+    userId: string,
+  ) {
+    const image = this.userImageRepository.create({
+      user_id: userId,
+      data: file.buffer,
+      mime_type: file.mimetype,
+    });
+
+    await this.userImageRepository.save(image);
+    return true;
+  }
+
+  private async getPerfileImg(id: string) {
+    const img = await this.userImageRepository.findOne({
+      where: { user_id: id },
+    });
+
+    if (!img) {
+      return {
+        message: 'Image not found',
+      };
+    }
+    return img;
   }
 }
