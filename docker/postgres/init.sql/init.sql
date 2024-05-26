@@ -24,6 +24,14 @@ CREATE TABLE Users
 ALTER TABLE Users
     OWNER TO root;
 
+CREATE TABLE user_Image
+(
+    id      UUID DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    user_id UUID REFERENCES "Users" (id),
+    data    BYTEA NOT NULL,
+    mime_type VARCHAR NOT NULL
+);
+
 CREATE TABLE tasks
 (
     task_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -253,6 +261,7 @@ CREATE OR REPLACE FUNCTION get_task_details(task_id_param UUID)
                 task_deadline      DATE,
                 task_priority      INTEGER,
                 user_assigned      UUID,
+                user_username      VARCHAR,
                 user_email         VARCHAR,
                 project_id         UUID,
                 project_name       VARCHAR
@@ -267,12 +276,13 @@ BEGIN
                t.deadline      AS task_deadline,
                t.priority      AS task_priority,
                t.assignment    AS user_assigned,
+               u.username      AS user_username,
                u.email         AS user_email,
                p.id            AS project_id,
                p.name          AS project_name
         FROM tasks t
                  JOIN projects p ON t.project_id = p.id
-                 JOIN Users u ON t.assignment = u.id
+                 JOIN "Users" u ON t.assignment = u.id
         WHERE t.task_id = task_id_param;
 END;
 $$ LANGUAGE plpgsql;

@@ -38,7 +38,7 @@ export class AuthController {
     return this.authService.findAll(pagination);
   }
 
-  @UseGuards(AuthGuard())
+  // @UseGuards(AuthGuard())
   @Get('/:term')
   findOne(@Param('term') term: string) {
     return this.authService.findBy(term);

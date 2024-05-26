@@ -33,7 +33,7 @@ export class AttachmentsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.attachmentsService.findOne(+id);
+    return this.attachmentsService.findOne(id);
   }
 
   @Patch(':id')
@@ -41,11 +41,11 @@ export class AttachmentsController {
     @Param('id') id: string,
     @Body() updateAttachmentDto: UpdateAttachmentDto,
   ) {
-    return this.attachmentsService.update(+id, updateAttachmentDto);
+    return this.attachmentsService.update(id, updateAttachmentDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.attachmentsService.remove(+id);
+    return this.attachmentsService.remove(id);
   }
 }

@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskDto } from './dto/update-task.dto';
-import { Task } from './entities/task.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { AuthService } from '../auth/auth.service';
-import { ProjectsService } from '../projects/projects.service';
-import { v4 as uuidv4, validate as isUUID } from 'uuid';
+import {Injectable} from '@nestjs/common';
+import {CreateTaskDto} from './dto/create-task.dto';
+import {UpdateTaskDto} from './dto/update-task.dto';
+import {Task} from './entities/task.entity';
+import {Repository} from 'typeorm';
+import {InjectRepository} from '@nestjs/typeorm';
+import {AuthService} from '../auth/auth.service';
+import {ProjectsService} from '../projects/projects.service';
+import {v4 as uuidv4, validate as isUUID} from 'uuid';
 
 @Injectable()
 export class TasksService {
@@ -15,7 +15,8 @@ export class TasksService {
     private taskRepository: Repository<Task>,
     private projectService: ProjectsService,
     private authService: AuthService,
-  ) {}
+  ) {
+  }
 
   async create(createTaskDto: CreateTaskDto) {
     const user = await this.authService.findBy(createTaskDto.assignment);
@@ -65,7 +66,7 @@ export class TasksService {
       if (isUUID(term)) {
         task = await this.taskRepository.query(
           `SELECT *
-         FROM get_task_details('${term}')`,
+           FROM get_task_details('${term}')`,
         );
       } else {
       }
@@ -78,7 +79,10 @@ export class TasksService {
     } catch (error) {
       return error;
     }
-    return task;
+    return {
+      task,
+      status: 200,
+    };
   }
 
   update(id: number, updateTaskDto: UpdateTaskDto) {
