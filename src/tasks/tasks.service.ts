@@ -1,12 +1,12 @@
-import {Injectable} from '@nestjs/common';
-import {CreateTaskDto} from './dto/create-task.dto';
-import {UpdateTaskDto} from './dto/update-task.dto';
-import {Task} from './entities/task.entity';
-import {Repository} from 'typeorm';
-import {InjectRepository} from '@nestjs/typeorm';
-import {AuthService} from '../auth/auth.service';
-import {ProjectsService} from '../projects/projects.service';
-import {v4 as uuidv4, validate as isUUID} from 'uuid';
+import { Injectable } from '@nestjs/common';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
+import { Task } from './entities/task.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AuthService } from '../auth/auth.service';
+import { ProjectsService } from '../projects/projects.service';
+import { v4 as uuidv4, validate as isUUID } from 'uuid';
 
 @Injectable()
 export class TasksService {
@@ -15,8 +15,7 @@ export class TasksService {
     private taskRepository: Repository<Task>,
     private projectService: ProjectsService,
     private authService: AuthService,
-  ) {
-  }
+  ) {}
 
   async create(createTaskDto: CreateTaskDto) {
     const user = await this.authService.findBy(createTaskDto.assignment);
@@ -87,7 +86,7 @@ export class TasksService {
 
   async update(id: string, updateTaskDto: UpdateTaskDto) {
     let task = await this.taskRepository.findOne({
-      where: {task_id: id},
+      where: { task_id: id },
     });
     if (!task) {
       return {
@@ -99,7 +98,7 @@ export class TasksService {
     try {
       task = await this.taskRepository.preload({
         task_id: id,
-        ...updateTaskDto
+        ...updateTaskDto,
       });
       await this.taskRepository.save(task);
       return {
@@ -116,7 +115,7 @@ export class TasksService {
 
   async remove(id: string) {
     const task = await this.taskRepository.findOne({
-      where: {task_id: id},
+      where: { task_id: id },
     });
     if (!task) {
       return {
