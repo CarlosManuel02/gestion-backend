@@ -85,11 +85,56 @@ export class TasksService {
     };
   }
 
-  update(id: number, updateTaskDto: UpdateTaskDto) {
-    return `This action updates a #${id} task`;
+  async update(id: string, updateTaskDto: UpdateTaskDto) {
+    let task = await this.taskRepository.findOne({
+      where: {task_id: id},
+    });
+    if (!task) {
+      return {
+        status: 500,
+        message: 'Error deleting the task',
+      };
+    }
+
+    try {
+      task = await this.taskRepository.preload({
+        task_id: id,
+        ...updateTaskDto
+      });
+      await this.taskRepository.save(task);
+      return {
+        status: 200,
+        task: task,
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: 'Error updating task',
+      };
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} task`;
+  async remove(id: string) {
+    const task = await this.taskRepository.findOne({
+      where: {task_id: id},
+    });
+    if (!task) {
+      return {
+        status: 500,
+        message: 'Error deleting the task',
+      };
+    }
+    try {
+      await this.taskRepository.delete(id);
+      return {
+        status: 200,
+        message: 'Task Deleted',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: 'Error deleting task',
+      };
+    }
   }
 }
