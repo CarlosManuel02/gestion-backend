@@ -32,6 +32,14 @@ CREATE TABLE user_Image
     mime_type VARCHAR NOT NULL
 );
 
+CREATE TABLE notifications
+(
+    id         UUID DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    user_id    UUID REFERENCES "Users" (id),
+    message    TEXT,
+    created_at TIMESTAMP
+);
+
 CREATE TABLE tasks
 (
     task_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -51,8 +59,19 @@ CREATE TABLE Attachments (
     file_name VARCHAR NOT NULL,
     data BYTEA NOT NULL,
     mime_type VARCHAR NOT NULL,
+    "size" integer not null default 0,
     created_at TIMESTAMP DEFAULT now()
 );
+
+CREATE TABLE task_comments
+(
+    id         UUID DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    task_id    UUID REFERENCES tasks (task_id),
+    user_id    UUID REFERENCES Users (id),
+    comment    TEXT,
+    created_at TIMESTAMP
+);
+
 
 CREATE TABLE projects
 (
@@ -309,3 +328,47 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION get_all_comments_from_task(task_id_param UUID)
+    RETURNS TABLE
+            (
+                comment_id UUID,
+                task_id    UUID,
+                user_id    UUID,
+                user_username VARCHAR,
+                user_email VARCHAR,
+                comment    TEXT,
+                created_at TIMESTAMP
+            ) AS $$
+BEGIN
+    RETURN QUERY
+        SELECT tc.id         AS comment_id,
+               tc.task_id    AS task_id,
+               tc.user_id    AS user_id,
+               u.username    AS user_username,
+               u.email       AS user_email,
+               tc.comment    AS comment,
+               tc.created_at AS created_at
+        FROM task_comments tc
+                 JOIN "Users" u ON tc.user_id = u.id
+        WHERE tc.task_id = task_id_param;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION get_all_notifications_from_user(user_id_param UUID)
+    RETURNS TABLE
+            (
+                notification_id UUID,
+                user_id         UUID,
+                message         TEXT,
+                created_at      TIMESTAMP
+            ) AS $$
+BEGIN
+    RETURN QUERY
+        SELECT n.id         AS notification_id,
+               n.user_id    AS user_id,
+               n.message    AS message,
+               n.created_at AS created_at
+        FROM notifications n
+        WHERE n.user_id = user_id_param;
+END;
+$$ LANGUAGE plpgsql;
