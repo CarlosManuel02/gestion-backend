@@ -5,12 +5,12 @@ export class UserImage {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid', nullable: false })
+  @Column({ type: 'uuid' })
   user_id: string;
 
-  @Column({ type: 'bytea', nullable: false })
+  @Column({ type: 'bytea' })
   data: Buffer;
 
-  @Column({ type: 'varchar', nullable: false })
+  @Column({ type: 'varchar' })
   mime_type: string;
 }

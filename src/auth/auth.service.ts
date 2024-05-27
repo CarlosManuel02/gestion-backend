@@ -57,7 +57,10 @@ export class AuthService {
         if (!log) {
           throw new BadRequestException('Error while creating the log');
         }
-        await this.saveImage(file, user.id);
+        const img = await this.saveImage(file, user.id);
+        if (img.message !== 'Image saved successfully') {
+          throw new BadRequestException('Error while saving the image');
+        }
       });
       return {
         user: auth.id,
@@ -293,13 +296,24 @@ export class AuthService {
     userId: string,
   ) {
     const image = this.userImageRepository.create({
+      id: uuidv4(),
       user_id: userId,
       data: file.buffer,
       mime_type: file.mimetype,
     });
 
-    await this.userImageRepository.save(image);
-    return true;
+    try {
+      await this.userImageRepository.save(image);
+      return {
+        message: 'Image saved successfully',
+        image,
+      };
+    } catch (e) {
+      return {
+        message: 'Error while saving the image',
+        e,
+      };
+    }
   }
 
   private async getPerfileImg(id: string) {
