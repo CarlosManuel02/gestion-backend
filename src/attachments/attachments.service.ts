@@ -22,6 +22,8 @@ export class AttachmentsService {
       file_name: file.originalname,
       mime_type: file.mimetype,
       data: file.buffer,
+      created_at: new Date(),
+      size: file.size,
     });
 
     await this.attachmentRepository.save(attachment);

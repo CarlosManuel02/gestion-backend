@@ -117,7 +117,7 @@ export class AuthService {
     return user;
   }
 
-  async update(id: string, updateAuthDto: UpdateAuthDto) {
+  async update(id: string, updateAuthDto: UpdateAuthDto, file) {
     const user = await this.authRepository.preload({
       id: id,
       ...updateAuthDto,
@@ -195,12 +195,14 @@ export class AuthService {
     const user = await this.findBy(payload.email);
     if (!user) throw new NotFoundException('User not found');
     const newToken = await this.generateJWT(user);
+    const img = await this.getPerfileImg(user.id);
     return {
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
         role: user.role,
+        image: img,
       },
       token: newToken,
       status: 200,

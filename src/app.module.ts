@@ -31,7 +31,7 @@ import * as process from 'process';
       ssl: process.env.DB_SSL === 'true',
       // url: process.env.DATABASE_URL,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true,
+      synchronize: false,
       logging: false,
     }),
     CommonModule,
