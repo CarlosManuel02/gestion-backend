@@ -33,9 +33,9 @@ export class AuthService {
   async create(createAuthDto: CreateAuthDto, file) {
     createAuthDto.id = uuidv4();
 
-    createAuthDto.role = 'user';
-
-    const user = await this.findBy(createAuthDto.email);
+    const user = await this.authRepository.findOne({
+      where: { email: createAuthDto.email },
+    });
     if (user) {
       return {
         message: 'The email is already in use',
@@ -53,7 +53,10 @@ export class AuthService {
 
       const auth = this.authRepository.create(createAuthDto);
       await this.authRepository.save(auth).then(async (user) => {
-        await this.logService.create(user.id, 'User created');
+        const log = await this.logService.create(user.id, 'User created');
+        if (!log) {
+          throw new BadRequestException('Error while creating the log');
+        }
         await this.saveImage(file, user.id);
       });
       return {
@@ -96,7 +99,7 @@ export class AuthService {
             id: term,
           },
           {
-            resetPasswordToken: term,
+            reset_password_token: term,
           },
         ]);
       } else {
@@ -175,7 +178,6 @@ export class AuthService {
           id: user.id,
           username: user.username,
           email: user.email,
-          role: user.role,
           image: img,
         },
         token,
@@ -201,7 +203,6 @@ export class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role,
         image: img,
       },
       token: newToken,
@@ -213,7 +214,6 @@ export class AuthService {
     const payload = {
       username: createAuthDto.username,
       email: createAuthDto.email,
-      role: createAuthDto.role,
     };
     return this.jwtService.sign(payload);
   }
@@ -226,8 +226,8 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    user.resetPasswordToken = this.genetareCode();
-    user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+    user.reset_password_token = this.genetareCode();
+    user.reset_password_expires = new Date(Date.now() + 3600000); // 1 hour
 
     await this.authRepository.save(user);
 
@@ -240,14 +240,14 @@ export class AuthService {
 
   async verifyCode(token: string) {
     const user = await this.authRepository.findOneBy({
-      resetPasswordToken: token,
+      reset_password_token: token,
     });
     if (!user) {
       throw new UnauthorizedException();
     }
-    if (user.resetPasswordExpires < new Date()) {
-      user.resetPasswordToken = null;
-      user.resetPasswordExpires = null;
+    if (user.reset_password_expires < new Date()) {
+      user.reset_password_token = null;
+      user.reset_password_expires = null;
       await this.authRepository.save(user);
       throw new UnauthorizedException('Token expired');
     }
@@ -262,7 +262,7 @@ export class AuthService {
 
     const user = await this.authRepository.findOneBy({
       id,
-      resetPasswordToken: code,
+      reset_password_token: code,
     });
     if (!user) {
       throw new UnauthorizedException();
@@ -270,8 +270,8 @@ export class AuthService {
 
     user.salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, user.salt);
-    user.resetPasswordToken = null;
-    user.resetPasswordExpires = null;
+    user.reset_password_token = null;
+    user.reset_password_expires = null;
 
     await this.authRepository.save(user);
     return {
@@ -281,7 +281,7 @@ export class AuthService {
 
   private sendEmail(user: User, subjet: string) {
     //TODO: Implement email service
-    console.log(`CODE: ${user.resetPasswordToken}`);
+    console.log(`CODE: ${user.reset_password_token}`);
   }
 
   private genetareCode() {

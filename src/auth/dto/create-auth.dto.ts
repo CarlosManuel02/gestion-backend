@@ -6,8 +6,8 @@ import {
   IsOptional,
   IsPositive,
   IsString,
-  MinLength
-} from "class-validator";
+  MinLength,
+} from 'class-validator';
 
 export class CreateAuthDto {
   @IsPositive()
@@ -26,12 +26,6 @@ export class CreateAuthDto {
   @IsString()
   @MinLength(8)
   password: string;
-
-  @IsString()
-  @IsIn(['admin', 'user'])
-  @IsOptional()
-  role?: string;
-
 
   @IsString()
   @IsOptional()

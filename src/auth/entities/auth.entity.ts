@@ -1,9 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
-@Entity({
-  name: 'Users',
-})
+@Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -26,27 +24,17 @@ export class User {
   @Column('varchar', {
     nullable: false,
   })
-  role: string;
-
-  @Column('timestamp', {
-    nullable: true,
-  })
-  lastLogin: Date;
-
-  @Column('varchar', {
-    nullable: false,
-  })
   salt: string;
 
   @Column('varchar', {
     nullable: true,
   })
-  resetPasswordToken: string;
+  reset_password_token: string;
 
   @Column('timestamp', {
     nullable: true,
   })
-  resetPasswordExpires: Date;
+  reset_password_expires: Date;
 
   async validatePassword(password: string): Promise<boolean> {
     const hash = await bcrypt.hash(password, this.salt);

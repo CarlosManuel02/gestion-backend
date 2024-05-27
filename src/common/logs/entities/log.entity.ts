@@ -1,16 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity({
-  name: 'Logs',
-})
+@Entity({ name: 'logs' })
 export class Log {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('varchar', {
-    nullable: false,
-  })
+  @Column('uuid', {})
   user_id: string;
 
   @Column('varchar', {
@@ -18,8 +13,6 @@ export class Log {
   })
   action: string;
 
-  @Column('timestamp', {
-    nullable: true,
-  })
-  createdAt: Date;
+  @Column('timestamp', {})
+  created_at: Date;
 }
