@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { TasksModule } from './tasks/tasks.module';
 import { ProjectsModule } from './projects/projects.module';
 import { AttachmentsModule } from './attachments/attachments.module';
+import { CommentsModule } from './comments/comments.module';
 import * as process from 'process';
 
 @Module({
@@ -38,6 +39,7 @@ import * as process from 'process';
     TasksModule,
     ProjectsModule,
     AttachmentsModule,
+    CommentsModule,
   ],
   controllers: [],
   providers: [AuthService, JwtService],
