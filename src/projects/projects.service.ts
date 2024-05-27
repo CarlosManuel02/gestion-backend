@@ -120,6 +120,7 @@ export class ProjectsService {
     }
 
     const projectMember = this.projectMenbersRepository.create({
+      id: uuidv4(),
       project_id: project_id,
       user_id: member.id,
       role: member.role,

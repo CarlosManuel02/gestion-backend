@@ -32,6 +32,7 @@ export class TasksService {
     }
     createTaskDto.creation_date = new Date().toISOString();
     createTaskDto.assignment = user.id;
+    createTaskDto.task_id = uuidv4();
     const task = this.taskRepository.create(createTaskDto);
     return this.taskRepository.save(task);
   }

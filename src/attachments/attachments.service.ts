@@ -5,7 +5,7 @@ import { Attachment } from './entities/attachment.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TasksService } from '../tasks/tasks.service';
-import { isUUID } from 'class-validator';
+import { v4 as uuidv4, validate as isUUID } from 'uuid';
 
 @Injectable()
 export class AttachmentsService {
@@ -18,6 +18,7 @@ export class AttachmentsService {
 
   async create(file, createAttachmentDto: CreateAttachmentDto) {
     const attachment = this.attachmentRepository.create({
+      id: uuidv4(),
       task_id: createAttachmentDto.task_id,
       file_name: file.originalname,
       mime_type: file.mimetype,
