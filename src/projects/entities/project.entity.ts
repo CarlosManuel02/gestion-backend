@@ -33,4 +33,7 @@ export class Project {
 
   @Column({ type: 'varchar', length: 50, nullable: false })
   status: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  project_key: string;
 }

@@ -12,6 +12,7 @@ import { isUUID } from 'class-validator';
 import { AddMemberDto } from './dto/add-member.dto';
 import { AuthService } from '../auth/auth.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ProjectRepo } from './entities/projectRepo.entity';
 
 @Injectable()
 export class ProjectsService {
@@ -23,6 +24,9 @@ export class ProjectsService {
     private imageRepository: Repository<Image>,
     @InjectRepository(ProjectMenbers)
     private projectMenbersRepository: Repository<ProjectMenbers>,
+    @InjectRepository(ProjectRepo)
+    private projectRepoRepository: Repository<ProjectRepo>,
+
     private auth: AuthService,
     private notificationService: NotificationsService,
   ) {}
@@ -45,6 +49,9 @@ export class ProjectsService {
     try {
       await this.projectRepository.save(project).then(async () => {
         await this.notifyMembers([...admins, ...members], project);
+        if (createProjectDto.repository_url) {
+          await this.saveProjectRepo(project, createProjectDto.repository_url);
+        }
         return await this.validateUser(createProjectDto, project);
       });
     } catch (error) {
@@ -92,6 +99,24 @@ export class ProjectsService {
       return projects;
     } catch (error) {
       throw new NotFoundException('No projects found');
+    }
+  }
+
+  private async saveProjectRepo(project: Project, repo: string) {
+    const projectRepo = this.projectRepoRepository.create({
+      id: uuidv4(),
+      project_id: project.id,
+      url: repo,
+    });
+    try {
+      await this.projectRepoRepository.save(projectRepo).then((res) => {
+        return {
+          message: `Repo ${repo} added to project with id ${project.id}`,
+          res,
+        };
+      });
+    } catch (error) {
+      return error;
     }
   }
 

@@ -3,10 +3,8 @@ import {
   IsNotEmpty,
   IsOptional,
   IsDateString,
-  IsInt,
   IsArray,
 } from 'class-validator';
-import {Image} from "../entities/image.entity";
 
 export class CreateProjectDto {
 
@@ -45,4 +43,12 @@ export class CreateProjectDto {
   @IsString()
   @IsNotEmpty()
   owner: string;
+
+  @IsString()
+  @IsNotEmpty()
+  project_key: string;
+
+  @IsString()
+  @IsOptional()
+  repository_url: string;
 }

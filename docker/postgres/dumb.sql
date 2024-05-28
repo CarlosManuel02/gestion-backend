@@ -165,7 +165,7 @@ BEGIN
                  LEFT JOIN project_repositories pr ON p.id = pr.project_id
         WHERE p.id = project_id_param
            OR p.name = project_name_param
-        GROUP BY p.id, img.url, u.username, u.email;
+        GROUP BY p.id, img.url, u.username, u.email, pr.url;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -174,6 +174,7 @@ CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
     RETURNS TABLE (
                       project_id          UUID,
                       project_name        VARCHAR,
+                      project_key         VARCHAR,
                       project_owner_id    UUID,
                       project_owner_name  VARCHAR,
                       project_owner_email VARCHAR,
@@ -182,12 +183,14 @@ CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
                       project_end_date    DATE,
                       project_status      VARCHAR,
                       project_image_url   TEXT,
+                      project_repository  TEXT,
                       members             JSONB
                   ) AS $$
 BEGIN
     RETURN QUERY
         SELECT p.id          AS project_id,
                 p.name        AS project_name,
+                p.project_key AS project_key,
                 p.owner       AS project_owner_id,
                 u.username    AS project_owner_name,
                 u.email       AS project_owner_email,
@@ -196,6 +199,7 @@ BEGIN
                 p.end_date    AS project_end_date,
                 p.status      AS project_status,
                 img.url       AS project_image_url,
+                pr.url        AS project_repository,
                 jsonb_agg(
                           jsonb_build_object(
                                  'member_id', u.id,
@@ -208,8 +212,9 @@ BEGIN
                  LEFT JOIN images img ON p.image = img.image_id
                  LEFT JOIN project_members pm ON p.id = pm.project_id
                  LEFT JOIN Users u ON pm.user_id = u.id
+                 LEFT JOIN project_repositories pr ON p.id = pr.project_id
         WHERE pm.user_id = user_id_param
-        GROUP BY p.id, img.url, u.username, u.email;
+        GROUP BY p.id, img.url, u.username, u.email, pr.url;
 END;
 $$ LANGUAGE plpgsql;
 
