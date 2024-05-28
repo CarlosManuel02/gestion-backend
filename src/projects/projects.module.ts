@@ -6,10 +6,13 @@ import { Project } from './entities/project.entity';
 import { Image } from './entities/image.entity';
 import { ProjectMenbers } from './entities/projectMenbers.entity';
 import { AuthModule } from '../auth/auth.module';
+import {NotificationsService} from "../notifications/notifications.service";
+import {NotificationsModule} from "../notifications/notifications.module";
 
 @Module({
   imports: [
     AuthModule,
+    NotificationsModule,
     TypeOrmModule.forFeature([Project, Image, ProjectMenbers]),
   ],
   controllers: [ProjectsController],

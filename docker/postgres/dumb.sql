@@ -24,9 +24,10 @@ CREATE TABLE user_Image (
 -- Notifications Table
 CREATE TABLE notifications (
                                id         UUID NOT NULL PRIMARY KEY,
-                               user_id    UUID REFERENCES Users (id),
-                               message    TEXT,
-                               created_at TIMESTAMP
+                               from_user  UUID REFERENCES Users (id),
+                                to_user    UUID REFERENCES Users (id),
+                                message    TEXT,
+                                created_at TIMESTAMP
 );
 
 -- Logs Table
@@ -113,7 +114,9 @@ CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_na
     RETURNS TABLE (
                       project_id          UUID,
                       project_name        VARCHAR,
-                      project_owner       UUID,
+                      project_owner_id    UUID,
+                      project_owner_name  VARCHAR,
+                      project_owner_email VARCHAR,
                       project_description TEXT,
                       project_start_date  DATE,
                       project_end_date    DATE,
@@ -125,7 +128,9 @@ BEGIN
     RETURN QUERY
         SELECT p.id          AS project_id,
                p.name        AS project_name,
-               p.owner       AS project_owner,
+               p.owner       AS project_owner_id,
+               u.username    AS project_owner_name,
+               u.email       AS project_owner_email,
                p.description AS project_description,
                p.start_date  AS project_start_date,
                p.end_date    AS project_end_date,
@@ -143,8 +148,9 @@ BEGIN
                  LEFT JOIN images img ON p.image = img.image_id
                  LEFT JOIN project_members pm ON p.id = pm.project_id
                  LEFT JOIN Users u ON pm.user_id = u.id
-        WHERE (p.id = project_id_param OR p.name = project_name_param)
-        GROUP BY p.id, img.url;
+        WHERE p.id = project_id_param
+           OR p.name = project_name_param
+        GROUP BY p.id, img.url, u.username, u.email;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -153,7 +159,9 @@ CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
     RETURNS TABLE (
                       project_id          UUID,
                       project_name        VARCHAR,
-                      project_owner       UUID,
+                      project_owner_id    UUID,
+                      project_owner_name  VARCHAR,
+                      project_owner_email VARCHAR,
                       project_description TEXT,
                       project_start_date  DATE,
                       project_end_date    DATE,
@@ -164,27 +172,29 @@ CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
 BEGIN
     RETURN QUERY
         SELECT p.id          AS project_id,
-               p.name        AS project_name,
-               p.owner       AS project_owner,
-               p.description AS project_description,
-               p.start_date  AS project_start_date,
-               p.end_date    AS project_end_date,
-               p.status      AS project_status,
-               img.url       AS project_image_url,
-               jsonb_agg(
-                       jsonb_build_object(
-                               'member_id', u.id,
-                               'member_username', u.username,
-                               'member_email', u.email,
-                               'member_role', pm.role
-                       )
-               ) AS members
+                p.name        AS project_name,
+                p.owner       AS project_owner_id,
+                u.username    AS project_owner_name,
+                u.email       AS project_owner_email,
+                p.description AS project_description,
+                p.start_date  AS project_start_date,
+                p.end_date    AS project_end_date,
+                p.status      AS project_status,
+                img.url       AS project_image_url,
+                jsonb_agg(
+                          jsonb_build_object(
+                                 'member_id', u.id,
+                                 'member_username', u.username,
+                                 'member_email', u.email,
+                                 'member_role', pm.role
+                          )
+                ) AS members
         FROM projects p
                  LEFT JOIN images img ON p.image = img.image_id
                  LEFT JOIN project_members pm ON p.id = pm.project_id
                  LEFT JOIN Users u ON pm.user_id = u.id
         WHERE pm.user_id = user_id_param
-        GROUP BY p.id, img.url;
+        GROUP BY p.id, img.url, u.username, u.email;
 END;
 $$ LANGUAGE plpgsql;
 

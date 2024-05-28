@@ -11,6 +11,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { ProjectsModule } from './projects/projects.module';
 import { AttachmentsModule } from './attachments/attachments.module';
 import { CommentsModule } from './comments/comments.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import * as process from 'process';
 
 @Module({
@@ -40,6 +41,7 @@ import * as process from 'process';
     ProjectsModule,
     AttachmentsModule,
     CommentsModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [AuthService, JwtService],

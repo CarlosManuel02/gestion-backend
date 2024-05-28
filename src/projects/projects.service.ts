@@ -11,6 +11,7 @@ import { ProjectMenbers } from './entities/projectMenbers.entity';
 import { isUUID } from 'class-validator';
 import { AddMemberDto } from './dto/add-member.dto';
 import { AuthService } from '../auth/auth.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ProjectsService {
@@ -22,8 +23,8 @@ export class ProjectsService {
     private imageRepository: Repository<Image>,
     @InjectRepository(ProjectMenbers)
     private projectMenbersRepository: Repository<ProjectMenbers>,
-
     private auth: AuthService,
+    private notificationService: NotificationsService,
   ) {}
 
   async create(createProjectDto: CreateProjectDto) {
@@ -35,18 +36,34 @@ export class ProjectsService {
     createProjectDto.start_date = new Date();
     createProjectDto.end_date = new Date();
     createProjectDto.image_url = image.image_id;
+    const { admins, members } = await this.getAdmins(createProjectDto);
+    createProjectDto.members = admins;
     const project = this.projectRepository.create({
       image_id: image,
       ...createProjectDto,
     });
     try {
       await this.projectRepository.save(project).then(async () => {
+        await this.notifyMembers(members, project);
         return await this.validateUser(createProjectDto, project);
       });
     } catch (error) {
       return error;
     }
     return project;
+  }
+
+  private async notifyMembers(members: any[], project: Project) {
+    for (const member of members) {
+      const notification = this.notificationService.create({
+        from_user: project.owner, // Asumiendo que `created_by` es el creador del proyecto
+        to_user: member.id,
+        message: `Has sido agregado al proyecto ${project.name}`,
+        created_at: new Date(),
+      });
+      await this.notificationService.save(notification);
+      this.notificationService.addNotification(notification);
+    }
   }
 
   private async validateUser(
@@ -69,7 +86,8 @@ export class ProjectsService {
   async findAll(term: string) {
     try {
       const projects = await this.projectRepository.query(
-        `SELECT * FROM get_all_projects_from_user('${term}')`,
+        `SELECT *
+         FROM get_all_projects_from_user('${term}')`,
       );
       return projects;
     } catch (error) {
@@ -153,5 +171,20 @@ export class ProjectsService {
 
   checkUserExists(user_id: string) {
     return this.auth.findBy(user_id);
+  }
+
+  async getAdmins(createProjectDto: CreateProjectDto) {
+    const members = [];
+    const admins = [];
+    if (createProjectDto.members) {
+      for (const member of createProjectDto.members) {
+        if (member.role === 'member') {
+          members.push(member);
+        } else {
+          admins.push(member);
+        }
+      }
+    }
+    return { admins, members };
   }
 }
