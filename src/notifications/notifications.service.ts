@@ -41,4 +41,23 @@ export class NotificationsService {
   getNotifications() {
     return this.notifications$.asObservable();
   }
+
+  async getAllNotifications(id: string) {
+    try {
+      const notifications = await this.notificationRepository.query(
+        `SELECT * FROM get_all_notifications_from_user('${id}')`,
+      );
+      return {
+        notifications,
+        count: notifications.length,
+        status: 200,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        status: 500,
+        message: error,
+      };
+    }
+  }
 }

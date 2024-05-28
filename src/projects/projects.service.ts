@@ -44,7 +44,7 @@ export class ProjectsService {
     });
     try {
       await this.projectRepository.save(project).then(async () => {
-        await this.notifyMembers(members, project);
+        await this.notifyMembers([...admins, ...members], project);
         return await this.validateUser(createProjectDto, project);
       });
     } catch (error) {
@@ -55,9 +55,11 @@ export class ProjectsService {
 
   private async notifyMembers(members: any[], project: Project) {
     for (const member of members) {
+      console.log(member);
       await this.notificationService.create({
+        title: `Project ${project.name}`,
         from_user: project.owner,
-        to_user: member.user,
+        to_user: member.id,
         message: `You have been added to project ${project.name}`,
         created_at: project.start_date,
       });

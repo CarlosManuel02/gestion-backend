@@ -1,4 +1,4 @@
-import { Controller, Sse } from '@nestjs/common';
+import {Controller, Get, Param, Sse} from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { map, Observable } from 'rxjs';
 import { Notification } from './entities/notification.entity';
@@ -6,6 +6,11 @@ import { Notification } from './entities/notification.entity';
 @Controller('notifications')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
+
+  @Get('all/:id')
+  getAllNotifications(@Param('id') id: string) {
+    return this.notificationsService.getAllNotifications(id);
+  }
 
   @Sse('notify')
   sseNotification(): Observable<{ data: Notification }> {

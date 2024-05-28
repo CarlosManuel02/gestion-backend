@@ -24,6 +24,7 @@ CREATE TABLE user_Image (
 -- Notifications Table
 CREATE TABLE notifications (
                                id         UUID NOT NULL PRIMARY KEY,
+                               title      TEXT,
                                from_user  UUID REFERENCES Users (id),
                                 to_user    UUID REFERENCES Users (id),
                                 message    TEXT,
@@ -375,17 +376,26 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION get_all_notifications_from_user(user_id_param UUID)
     RETURNS TABLE (
                       notification_id UUID,
-                      user_id         UUID,
-                      message         TEXT,
-                      created_at      TIMESTAMP
-                  ) AS $$
+                      title           TEXT,
+                        from_user_id    UUID,
+                        from_user_name  VARCHAR,
+                        from_user_email VARCHAR,
+                        message         TEXT,
+                        to_user_id      UUID,
+                        created_at      TIMESTAMP
+                    ) AS $$
 BEGIN
     RETURN QUERY
         SELECT n.id         AS notification_id,
-               n.user_id    AS user_id,
+               n.title      AS title,
+               n.from_user   AS from_user_id,
+               u.username    AS from_user_name,
+               u.email       AS from_user_email,
                n.message    AS message,
+               n.to_user    AS to_user_id,
                n.created_at AS created_at
         FROM notifications n
-        WHERE n.user_id = user_id_param;
+                 JOIN Users u ON n.from_user = u.id
+        WHERE n.to_user = user_id_param;
 END;
 $$ LANGUAGE plpgsql;

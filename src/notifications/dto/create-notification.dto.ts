@@ -5,6 +5,9 @@ export class CreateNotificationDto {
   @IsOptional()
   id?: string;
 
+  @IsString()
+  title: string;
+
   @IsUUID()
   from_user: string;
 

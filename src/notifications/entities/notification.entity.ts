@@ -5,6 +5,9 @@ export class Notification {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('text')
+  title: string;
+
   @Column('uuid')
   from_user: string;
 
