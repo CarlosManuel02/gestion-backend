@@ -15,10 +15,14 @@ export class NotificationsService {
     private notificationRepository: Repository<Notification>,
   ) {}
 
-  create(createNotificationDto: CreateNotificationDto): Notification {
+  async create(createNotificationDto: CreateNotificationDto) {
+    createNotificationDto.id = uuidv4();
     const notification = this.notificationRepository.create(
       createNotificationDto,
     );
+
+    await this.notificationRepository.save(notification);
+    this.addNotification(notification);
     return notification;
   }
 

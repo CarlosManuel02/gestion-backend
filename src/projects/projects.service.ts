@@ -37,7 +37,7 @@ export class ProjectsService {
     createProjectDto.end_date = new Date();
     createProjectDto.image_url = image.image_id;
     const { admins, members } = await this.getAdmins(createProjectDto);
-    createProjectDto.members = admins;
+    createProjectDto.members = [...admins, ...members];
     const project = this.projectRepository.create({
       image_id: image,
       ...createProjectDto,
@@ -55,14 +55,12 @@ export class ProjectsService {
 
   private async notifyMembers(members: any[], project: Project) {
     for (const member of members) {
-      const notification = this.notificationService.create({
-        from_user: project.owner, // Asumiendo que `created_by` es el creador del proyecto
-        to_user: member.id,
-        message: `Has sido agregado al proyecto ${project.name}`,
-        created_at: new Date(),
+      await this.notificationService.create({
+        from_user: project.owner,
+        to_user: member.user,
+        message: `You have been added to project ${project.name}`,
+        created_at: project.start_date,
       });
-      await this.notificationService.save(notification);
-      this.notificationService.addNotification(notification);
     }
   }
 
