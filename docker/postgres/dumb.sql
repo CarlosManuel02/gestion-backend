@@ -119,6 +119,31 @@ CREATE TABLE task_comments (
 -- Functions
 -- ===============================
 
+CREATE OR REPLACE FUNCTION get_user_details(user_id_param UUID, user_email_param VARCHAR)
+    RETURNS TABLE (
+                      user_id   UUID,
+                      username  VARCHAR,
+                      email     VARCHAR,
+                      image     jsonb
+                  ) AS $$
+BEGIN
+    RETURN QUERY
+        SELECT u.id        AS user_id,
+               u.username  AS username,
+               u.email     AS email,
+                jsonb_build_object(
+                          'image_id', ui.id,
+                          'data', ui.data,
+                          'mime_type', ui.mime_type
+                ) AS image
+        FROM Users u
+                 LEFT JOIN user_Image ui ON u.id = ui.user_id
+        WHERE u.id = user_id_param
+           OR u.email = user_email_param;
+END;
+$$ LANGUAGE plpgsql;
+
+
 -- Function to get project details
 CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_name_param VARCHAR)
     RETURNS TABLE (

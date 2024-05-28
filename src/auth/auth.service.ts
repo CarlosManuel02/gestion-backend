@@ -97,14 +97,9 @@ export class AuthService {
     let user: User;
     try {
       if (isUUID(term)) {
-        user = await this.authRepository.findOneBy([
-          {
-            id: term,
-          },
-          {
-            reset_password_token: term,
-          },
-        ]);
+        user = await this.authRepository.query(
+          `SELECT * FROM get_user_details('${term}', null)`,
+        );
       } else {
         const queryBuilder = this.authRepository.createQueryBuilder('user');
         user = await queryBuilder
