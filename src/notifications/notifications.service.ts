@@ -60,4 +60,8 @@ export class NotificationsService {
       };
     }
   }
+
+  markAsRead(id: string) {
+  //   TODO: Implement this method
+  }
 }

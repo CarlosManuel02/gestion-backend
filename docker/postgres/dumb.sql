@@ -28,6 +28,7 @@ CREATE TABLE notifications (
                                from_user  UUID REFERENCES Users (id),
                                 to_user    UUID REFERENCES Users (id),
                                 message    TEXT,
+                                read       BOOLEAN DEFAULT FALSE,
                                 created_at TIMESTAMP
 );
 
@@ -58,7 +59,8 @@ CREATE TABLE projects (
                           description TEXT,
                           start_date  DATE                            NOT NULL,
                           end_date    DATE,
-                          status      VARCHAR(50)                     NOT NULL
+                          status      VARCHAR(50)                     NOT NULL,
+                          project_key VARCHAR(50)
 );
 
 -- Project Members Table
@@ -67,6 +69,13 @@ CREATE TABLE project_members (
                                  project_id UUID REFERENCES projects (id),
                                  user_id    UUID REFERENCES Users (id),
                                  role       VARCHAR(50)                     NOT NULL
+);
+
+-- Project Repositories Table
+CREATE TABLE project_repositories (
+                                     id         UUID NOT NULL PRIMARY KEY,
+                                     project_id UUID REFERENCES projects (id),
+                                     url        TEXT                            NOT NULL
 );
 
 -- ===============================
@@ -115,6 +124,7 @@ CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_na
     RETURNS TABLE (
                       project_id          UUID,
                       project_name        VARCHAR,
+                      project_key         VARCHAR,
                       project_owner_id    UUID,
                       project_owner_name  VARCHAR,
                       project_owner_email VARCHAR,
@@ -122,6 +132,7 @@ CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_na
                       project_start_date  DATE,
                       project_end_date    DATE,
                       project_status      VARCHAR,
+                      project_repository  TEXT,
                       project_image_url   TEXT,
                       members             JSONB
                   ) AS $$
@@ -129,6 +140,7 @@ BEGIN
     RETURN QUERY
         SELECT p.id          AS project_id,
                p.name        AS project_name,
+               p.project_key AS project_key,
                p.owner       AS project_owner_id,
                u.username    AS project_owner_name,
                u.email       AS project_owner_email,
@@ -136,6 +148,7 @@ BEGIN
                p.start_date  AS project_start_date,
                p.end_date    AS project_end_date,
                p.status      AS project_status,
+               pr.url        AS project_repository,
                img.url       AS project_image_url,
                jsonb_agg(
                        jsonb_build_object(
@@ -149,6 +162,7 @@ BEGIN
                  LEFT JOIN images img ON p.image = img.image_id
                  LEFT JOIN project_members pm ON p.id = pm.project_id
                  LEFT JOIN Users u ON pm.user_id = u.id
+                 LEFT JOIN project_repositories pr ON p.id = pr.project_id
         WHERE p.id = project_id_param
            OR p.name = project_name_param
         GROUP BY p.id, img.url, u.username, u.email;
@@ -382,7 +396,8 @@ CREATE OR REPLACE FUNCTION get_all_notifications_from_user(user_id_param UUID)
                         from_user_email VARCHAR,
                         message         TEXT,
                         to_user_id      UUID,
-                        created_at      TIMESTAMP
+                        created_at      TIMESTAMP,
+                        read            BOOLEAN
                     ) AS $$
 BEGIN
     RETURN QUERY
@@ -393,7 +408,8 @@ BEGIN
                u.email       AS from_user_email,
                n.message    AS message,
                n.to_user    AS to_user_id,
-               n.created_at AS created_at
+               n.created_at AS created_at,
+                n.read       AS read
         FROM notifications n
                  JOIN Users u ON n.from_user = u.id
         WHERE n.to_user = user_id_param;

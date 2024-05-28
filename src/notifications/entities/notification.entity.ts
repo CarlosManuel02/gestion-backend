@@ -19,4 +19,7 @@ export class Notification {
 
   @Column('timestamp')
   created_at: Date;
+
+  @Column('boolean')
+  read: boolean;
 }

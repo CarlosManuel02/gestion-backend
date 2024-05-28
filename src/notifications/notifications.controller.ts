@@ -1,4 +1,4 @@
-import {Controller, Get, Param, Sse} from '@nestjs/common';
+import {Controller, Get, Param, Post, Sse} from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { map, Observable } from 'rxjs';
 import { Notification } from './entities/notification.entity';
@@ -10,6 +10,11 @@ export class NotificationsController {
   @Get('all/:id')
   getAllNotifications(@Param('id') id: string) {
     return this.notificationsService.getAllNotifications(id);
+  }
+
+  @Post('read/:id')
+  markAsRead(@Param('id') id: string) {
+    return this.notificationsService.markAsRead(id);
   }
 
   @Sse('notify')
