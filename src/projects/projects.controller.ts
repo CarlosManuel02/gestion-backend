@@ -26,6 +26,11 @@ export class ProjectsController {
     return this.projectsService.addMember(addMemberDto);
   }
 
+  @Get('members/:projectId')
+  getProjectMembers(@Param('projectId') projectId: string) {
+    return this.projectsService.getProjectMembers(projectId);
+  }
+
   @Get('all/:term')
   findAll(@Param('term') term: string) {
     return this.projectsService.findAll(term);

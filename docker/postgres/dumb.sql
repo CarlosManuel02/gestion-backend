@@ -447,3 +447,23 @@ BEGIN
         WHERE n.to_user = user_id_param;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Function to get all project's members
+CREATE OR REPLACE FUNCTION get_all_project_members(project_id_param UUID)
+    RETURNS TABLE (
+                      member_id   UUID,
+                      member_name VARCHAR,
+                      member_email VARCHAR,
+                      member_role VARCHAR
+                  ) AS $$
+BEGIN
+    RETURN QUERY
+        SELECT u.id       AS member_id,
+               u.username AS member_name,
+               u.email    AS member_email,
+               pm.role     AS member_role
+        FROM project_members pm
+                 JOIN Users u ON pm.user_id = u.id
+        WHERE pm.project_id = project_id_param;
+END;
+$$ LANGUAGE plpgsql;
