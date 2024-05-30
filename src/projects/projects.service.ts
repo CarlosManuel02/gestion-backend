@@ -212,4 +212,25 @@ export class ProjectsService {
     }
     return { admins, members };
   }
+
+  async getProjectMembers(projectId: string) {
+    const project = await this.projectMenbersRepository.find({
+      where: { project_id: projectId },
+    });
+    if (!project) {
+      return {
+        message: `Project with id ${projectId} not found`,
+      };
+    }
+
+    try {
+      const projectMembers = await this.projectMenbersRepository.query(`SELECT * FROM get_all_project_members('${projectId}')`);
+      return {
+        data: projectMembers,
+        status: 200,
+      };
+    } catch (error) {
+      return error;
+    }
+  }
 }
