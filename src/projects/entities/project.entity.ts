@@ -18,9 +18,6 @@ export class Project {
   @Column({ type: 'uuid', nullable: false })
   owner: string;
 
-  @ManyToOne(() => Image, { nullable: true })
-  @JoinColumn({ name: 'image' })
-  image_id: Image;
 
   @Column({ type: 'text', nullable: true })
   description: string;

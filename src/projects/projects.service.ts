@@ -26,24 +26,20 @@ export class ProjectsService {
     private projectMenbersRepository: Repository<ProjectMenbers>,
     @InjectRepository(ProjectRepo)
     private projectRepoRepository: Repository<ProjectRepo>,
-
     private auth: AuthService,
     private notificationService: NotificationsService,
   ) {}
 
-  async create(createProjectDto: CreateProjectDto) {
-    const image = this.imageRepository.create({
-      url: createProjectDto.image_url,
-    });
-    await this.imageRepository.save(image);
+  async create(createProjectDto: CreateProjectDto, file) {
+    // from String[] to json[]
+    createProjectDto.members = JSON.parse(createProjectDto.members.toString());
+
     createProjectDto.id = uuidv4();
     createProjectDto.start_date = new Date();
     createProjectDto.end_date = new Date();
-    createProjectDto.image_url = image.image_id;
     const { admins, members } = await this.getAdmins(createProjectDto);
     createProjectDto.members = [...admins, ...members];
     const project = this.projectRepository.create({
-      image_id: image,
       ...createProjectDto,
     });
     try {
@@ -51,6 +47,11 @@ export class ProjectsService {
         await this.notifyMembers([...admins, ...members], project);
         if (createProjectDto.repository_url) {
           await this.saveProjectRepo(project, createProjectDto.repository_url);
+        }
+        const img = await this.saveImage(file, project.id);
+        // console.log(img);
+        if (img.message !== 'Image saved successfully') {
+          return img;
         }
         return await this.validateUser(createProjectDto, project);
       });
@@ -224,13 +225,35 @@ export class ProjectsService {
     }
 
     try {
-      const projectMembers = await this.projectMenbersRepository.query(`SELECT * FROM get_all_project_members('${projectId}')`);
+      const projectMembers = await this.projectMenbersRepository.query(`SELECT *
+                                                                        FROM get_all_project_members('${projectId}')`);
       return {
         data: projectMembers,
         status: 200,
       };
     } catch (error) {
       return error;
+    }
+  }
+
+  async saveImage(file, id: string) {
+    const image = this.imageRepository.create({
+      project_id: id,
+      data: file.buffer,
+      mime_type: file.mimetype,
+    });
+
+    try {
+      await this.imageRepository.save(image);
+      return {
+        message: 'Image saved successfully',
+        image,
+      };
+    } catch (e) {
+      return {
+        message: 'Error while saving the image',
+        e,
+      };
     }
   }
 }

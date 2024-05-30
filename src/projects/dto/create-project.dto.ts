@@ -16,9 +16,6 @@ export class CreateProjectDto {
   @IsNotEmpty()
   name: string;
 
-  @IsOptional()
-  @IsString()
-  image_url?: string;
 
   @IsOptional()
   @IsString()
@@ -36,9 +33,9 @@ export class CreateProjectDto {
   @IsNotEmpty()
   status: string;
 
-  @IsArray()
+  // @IsArray()
   @IsNotEmpty()
-  members: { id: string; role: string }[];
+  members: any[];
 
   @IsString()
   @IsNotEmpty()

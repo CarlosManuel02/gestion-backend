@@ -5,20 +5,22 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
+  Delete, UploadedFile, UseInterceptors,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { AddMemberDto } from './dto/add-member.dto';
+import {FileInterceptor} from "@nestjs/platform-express";
 
 @Controller('projects')
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post()
-  create(@Body() createProjectDto: CreateProjectDto) {
-    return this.projectsService.create(createProjectDto);
+  @UseInterceptors(FileInterceptor('file'))
+  create(@UploadedFile() file, @Body() createProjectDto: CreateProjectDto) {
+    return this.projectsService.create(createProjectDto, file);
   }
 
   @Post('addMember')

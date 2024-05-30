@@ -47,7 +47,9 @@ CREATE TABLE Logs (
 -- Images Table
 CREATE TABLE images (
                         image_id SERIAL PRIMARY KEY,
-                        url      TEXT NOT NULL
+                        project_id UUID REFERENCES projects (id),
+                        data     BYTEA,
+                        mime_type VARCHAR
 );
 
 -- Projects Table
@@ -55,7 +57,6 @@ CREATE TABLE projects (
                           id          UUID NOT NULL PRIMARY KEY,
                           name        VARCHAR(255)                    NOT NULL,
                           owner       UUID REFERENCES Users (id),
-                          image       serial REFERENCES images (image_id),
                           description TEXT,
                           start_date  DATE                            NOT NULL,
                           end_date    DATE,
@@ -158,7 +159,7 @@ CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_na
                       project_end_date    DATE,
                       project_status      VARCHAR,
                       project_repository  TEXT,
-                      project_image_url   TEXT,
+                      image               JSONB,
                       members             JSONB
                   ) AS $$
 BEGIN
@@ -174,27 +175,34 @@ BEGIN
                p.end_date    AS project_end_date,
                p.status      AS project_status,
                pr.url        AS project_repository,
-               img.url       AS project_image_url,
+               (SELECT jsonb_build_object(
+                          'image_id', img.image_id,
+                          'data', img.data,
+                          'mime_type', img.mime_type
+                )
+                FROM images img
+                WHERE img.project_id = p.id
+                LIMIT 1) AS image,
                (SELECT jsonb_agg(
-                           jsonb_build_object(
-                               'member_id', mu.id,
-                               'member_username', mu.username,
-                               'member_email', mu.email,
-                               'member_role', pm.role
-                           )
-                       )
+                          jsonb_build_object(
+                                 'member_id', mu.id,
+                                 'member_username', mu.username,
+                                 'member_email', mu.email,
+                                 'member_role', pm.role
+                          )
+                )
                 FROM project_members pm
                          JOIN Users mu ON pm.user_id = mu.id
                 WHERE pm.project_id = p.id) AS members
         FROM projects p
-                 LEFT JOIN images img ON p.image = img.image_id
-                 LEFT JOIN Users u ON p.owner = u.id
+                 JOIN Users u ON p.owner = u.id
                  LEFT JOIN project_repositories pr ON p.id = pr.project_id
         WHERE p.id = project_id_param
            OR p.name = project_name_param
-        GROUP BY p.id, img.url, u.username, u.email, pr.url;
+        GROUP BY p.id, u.username, u.email, pr.url;
 END;
 $$ LANGUAGE plpgsql;
+
 
 -- Function to get all projects from a user
 CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
