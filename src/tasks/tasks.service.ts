@@ -89,7 +89,7 @@ export class TasksService {
     let task = await this.taskRepository.findOne({
       where: { task_id: id },
     });
-    if (!task) {
+    if (!task.task_id) {
       return {
         status: 500,
         message: 'Error deleting the task',
@@ -97,6 +97,8 @@ export class TasksService {
     }
 
     try {
+      const user = await this.authService.findBy(updateTaskDto.assignment);
+      updateTaskDto.assignment = user.id;
       task = await this.taskRepository.preload({
         task_id: id,
         ...updateTaskDto,
