@@ -59,7 +59,7 @@ CREATE TABLE projects (
                           description TEXT,
                           start_date  DATE                            NOT NULL,
                           end_date    DATE,
-                          status      VARCHAR(50)                     NOT NULL,
+                          status      VARCHAR(50)                     NOT NULL CHECK ( status IN ('active', 'inactive', 'completed') ),
                           project_key VARCHAR(50)
 );
 
@@ -87,7 +87,7 @@ CREATE TABLE tasks (
                        task_id       UUID NOT NULL PRIMARY KEY,
                        name          VARCHAR(255)                    NOT NULL,
                        description   TEXT,
-                       status        VARCHAR(50)                     NOT NULL,
+                       status        VARCHAR(50)                     NOT NULL CHECK ( status IN ('open', 'in_progress', 'completed', 'closed') ),
                        creation_date DATE                            NOT NULL,
                        deadline      DATE,
                        priority      INTEGER                         NOT NULL,
@@ -175,18 +175,20 @@ BEGIN
                p.status      AS project_status,
                pr.url        AS project_repository,
                img.url       AS project_image_url,
-               jsonb_agg(
-                       jsonb_build_object(
-                               'member_id', u.id,
-                               'member_username', u.username,
-                               'member_email', u.email,
+               (SELECT jsonb_agg(
+                           jsonb_build_object(
+                               'member_id', mu.id,
+                               'member_username', mu.username,
+                               'member_email', mu.email,
                                'member_role', pm.role
+                           )
                        )
-               ) AS members
+                FROM project_members pm
+                         JOIN Users mu ON pm.user_id = mu.id
+                WHERE pm.project_id = p.id) AS members
         FROM projects p
                  LEFT JOIN images img ON p.image = img.image_id
-                 LEFT JOIN project_members pm ON p.id = pm.project_id
-                 LEFT JOIN Users u ON pm.user_id = u.id
+                 LEFT JOIN Users u ON p.owner = u.id
                  LEFT JOIN project_repositories pr ON p.id = pr.project_id
         WHERE p.id = project_id_param
            OR p.name = project_name_param
