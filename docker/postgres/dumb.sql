@@ -26,10 +26,10 @@ CREATE TABLE notifications (
                                id         UUID NOT NULL PRIMARY KEY,
                                title      TEXT,
                                from_user  UUID REFERENCES Users (id),
-                                to_user    UUID REFERENCES Users (id),
-                                message    TEXT,
-                                read       BOOLEAN DEFAULT FALSE,
-                                created_at TIMESTAMP
+                               to_user    UUID REFERENCES Users (id),
+                               message    TEXT,
+                               read       BOOLEAN DEFAULT FALSE,
+                               created_at TIMESTAMP
 );
 
 -- Logs Table
@@ -44,18 +44,11 @@ CREATE TABLE Logs (
 -- Project Management Tables
 -- ===============================
 
--- Images Table
-CREATE TABLE images (
-                        image_id SERIAL PRIMARY KEY,
-                        url      TEXT NOT NULL
-);
-
 -- Projects Table
 CREATE TABLE projects (
                           id          UUID NOT NULL PRIMARY KEY,
                           name        VARCHAR(255)                    NOT NULL,
                           owner       UUID REFERENCES Users (id),
-                          image       serial REFERENCES images (image_id),
                           description TEXT,
                           start_date  DATE                            NOT NULL,
                           end_date    DATE,
@@ -73,11 +66,19 @@ CREATE TABLE project_members (
 
 -- Project Repositories Table
 CREATE TABLE project_repositories (
-                                     id         UUID NOT NULL PRIMARY KEY,
-                                     project_id UUID REFERENCES projects (id),
-                                     url        TEXT                            NOT NULL
+                                      id         UUID NOT NULL PRIMARY KEY,
+                                      project_id UUID REFERENCES projects (id),
+                                      url        TEXT                            NOT NULL
 );
 
+
+-- Images Table
+CREATE TABLE images (
+                        image_id SERIAL PRIMARY KEY,
+                        project_id UUID REFERENCES projects (id),
+                        data     BYTEA,
+                        mime_type VARCHAR
+);
 -- ===============================
 -- Task Management Tables
 -- ===============================
@@ -131,11 +132,11 @@ BEGIN
         SELECT u.id        AS user_id,
                u.username  AS username,
                u.email     AS email,
-                jsonb_build_object(
-                          'image_id', ui.id,
-                          'data', ui.data,
-                          'mime_type', ui.mime_type
-                ) AS image
+               jsonb_build_object(
+                       'image_id', ui.id,
+                       'data', ui.data,
+                       'mime_type', ui.mime_type
+               ) AS image
         FROM Users u
                  LEFT JOIN user_Image ui ON u.id = ui.user_id
         WHERE u.id = user_id_param
@@ -158,7 +159,7 @@ CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_na
                       project_end_date    DATE,
                       project_status      VARCHAR,
                       project_repository  TEXT,
-                      project_image_url   TEXT,
+                      image               JSONB,
                       members             JSONB
                   ) AS $$
 BEGIN
@@ -174,27 +175,34 @@ BEGIN
                p.end_date    AS project_end_date,
                p.status      AS project_status,
                pr.url        AS project_repository,
-               img.url       AS project_image_url,
+               (SELECT jsonb_build_object(
+                               'image_id', img.image_id,
+                               'data', img.data,
+                               'mime_type', img.mime_type
+                       )
+                FROM images img
+                WHERE img.project_id = p.id
+                LIMIT 1) AS image,
                (SELECT jsonb_agg(
-                           jsonb_build_object(
-                               'member_id', mu.id,
-                               'member_username', mu.username,
-                               'member_email', mu.email,
-                               'member_role', pm.role
-                           )
+                               jsonb_build_object(
+                                       'member_id', mu.id,
+                                       'member_username', mu.username,
+                                       'member_email', mu.email,
+                                       'member_role', pm.role
+                               )
                        )
                 FROM project_members pm
                          JOIN Users mu ON pm.user_id = mu.id
                 WHERE pm.project_id = p.id) AS members
         FROM projects p
-                 LEFT JOIN images img ON p.image = img.image_id
-                 LEFT JOIN Users u ON p.owner = u.id
+                 JOIN Users u ON p.owner = u.id
                  LEFT JOIN project_repositories pr ON p.id = pr.project_id
         WHERE p.id = project_id_param
            OR p.name = project_name_param
-        GROUP BY p.id, img.url, u.username, u.email, pr.url;
+        GROUP BY p.id, u.username, u.email, pr.url;
 END;
 $$ LANGUAGE plpgsql;
+
 
 -- Function to get all projects from a user
 CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
@@ -209,39 +217,43 @@ CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
                       project_start_date  DATE,
                       project_end_date    DATE,
                       project_status      VARCHAR,
-                      project_image_url   TEXT,
                       project_repository  TEXT,
+                      image               JSONB,
                       members             JSONB
                   ) AS $$
 BEGIN
     RETURN QUERY
         SELECT p.id          AS project_id,
-                p.name        AS project_name,
-                p.project_key AS project_key,
-                p.owner       AS project_owner_id,
-                u.username    AS project_owner_name,
-                u.email       AS project_owner_email,
-                p.description AS project_description,
-                p.start_date  AS project_start_date,
-                p.end_date    AS project_end_date,
-                p.status      AS project_status,
-                img.url       AS project_image_url,
-                pr.url        AS project_repository,
-                jsonb_agg(
-                          jsonb_build_object(
-                                 'member_id', u.id,
-                                 'member_username', u.username,
-                                 'member_email', u.email,
-                                 'member_role', pm.role
-                          )
-                ) AS members
+               p.name        AS project_name,
+               p.project_key AS project_key,
+               p.owner       AS project_owner_id,
+               u.username    AS project_owner_name,
+               u.email       AS project_owner_email,
+               p.description AS project_description,
+               p.start_date  AS project_start_date,
+               p.end_date    AS project_end_date,
+               p.status      AS project_status,
+               pr.url        AS project_repository,
+               jsonb_build_object(
+                       'image_id', img.image_id,
+                       'data', img.data,
+                       'mime_type', img.mime_type
+               ) AS image,
+               jsonb_agg(
+                       jsonb_build_object(
+                               'member_id', u.id,
+                               'member_username', u.username,
+                               'member_email', u.email,
+                               'member_role', pm.role
+                       )
+               ) AS members
         FROM projects p
-                 LEFT JOIN images img ON p.image = img.image_id
-                 LEFT JOIN project_members pm ON p.id = pm.project_id
-                 LEFT JOIN Users u ON pm.user_id = u.id
+                 JOIN Users u ON p.owner = u.id
                  LEFT JOIN project_repositories pr ON p.id = pr.project_id
+                 LEFT JOIN images img ON p.id = img.project_id
+                 LEFT JOIN project_members pm ON p.id = pm.project_id
         WHERE pm.user_id = user_id_param
-        GROUP BY p.id, img.url, u.username, u.email, pr.url;
+        GROUP BY p.id, u.username, u.email, pr.url, img.image_id, img.data, img.mime_type;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -423,14 +435,14 @@ CREATE OR REPLACE FUNCTION get_all_notifications_from_user(user_id_param UUID)
     RETURNS TABLE (
                       notification_id UUID,
                       title           TEXT,
-                        from_user_id    UUID,
-                        from_user_name  VARCHAR,
-                        from_user_email VARCHAR,
-                        message         TEXT,
-                        to_user_id      UUID,
-                        created_at      TIMESTAMP,
-                        read            BOOLEAN
-                    ) AS $$
+                      from_user_id    UUID,
+                      from_user_name  VARCHAR,
+                      from_user_email VARCHAR,
+                      message         TEXT,
+                      to_user_id      UUID,
+                      created_at      TIMESTAMP,
+                      read            BOOLEAN
+                  ) AS $$
 BEGIN
     RETURN QUERY
         SELECT n.id         AS notification_id,
@@ -441,7 +453,7 @@ BEGIN
                n.message    AS message,
                n.to_user    AS to_user_id,
                n.created_at AS created_at,
-                n.read       AS read
+               n.read       AS read
         FROM notifications n
                  JOIN Users u ON n.from_user = u.id
         WHERE n.to_user = user_id_param;
