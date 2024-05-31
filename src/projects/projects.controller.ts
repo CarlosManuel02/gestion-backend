@@ -17,7 +17,7 @@ import {FileInterceptor} from "@nestjs/platform-express";
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
-  @Post()
+  @Post('create')
   @UseInterceptors(FileInterceptor('file'))
   create(@UploadedFile() file, @Body() createProjectDto: CreateProjectDto) {
     return this.projectsService.create(createProjectDto, file);

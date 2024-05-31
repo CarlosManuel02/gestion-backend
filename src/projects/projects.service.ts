@@ -40,20 +40,26 @@ export class ProjectsService {
     const { admins, members } = await this.getAdmins(createProjectDto);
     createProjectDto.members = [...admins, ...members];
     const project = this.projectRepository.create({
-      ...createProjectDto,
+      id: createProjectDto.id,
+      name: createProjectDto.name,
+      description: createProjectDto.description,
+      start_date: createProjectDto.start_date,
+      end_date: createProjectDto.end_date,
+      owner: createProjectDto.owner,
+      project_key: createProjectDto.project_key,
+      status: createProjectDto.status,
     });
     try {
       await this.projectRepository.save(project).then(async () => {
+        await this.validateUser(createProjectDto, project);
         await this.notifyMembers([...admins, ...members], project);
         if (createProjectDto.repository_url) {
           await this.saveProjectRepo(project, createProjectDto.repository_url);
         }
-        const img = await this.saveImage(file, project.id);
-        // console.log(img);
-        if (img.message !== 'Image saved successfully') {
-          return img;
+        if (file) {
+          const img = await this.saveImage(file, project.id);
         }
-        return await this.validateUser(createProjectDto, project);
+        // console.log(img);
       });
     } catch (error) {
       return error;
@@ -176,6 +182,11 @@ export class ProjectsService {
           res,
         };
       });
+
+      return {
+        message: `User with id ${member.id} added to project with id ${project_id}`,
+        projectMember,
+      };
     } catch (error) {
       return error;
     }

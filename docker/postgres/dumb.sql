@@ -217,8 +217,8 @@ CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
                       project_start_date  DATE,
                       project_end_date    DATE,
                       project_status      VARCHAR,
-                      project_image_url   TEXT,
                       project_repository  TEXT,
+                      image               JSONB,
                       members             JSONB
                   ) AS $$
 BEGIN
@@ -233,8 +233,12 @@ BEGIN
                 p.start_date  AS project_start_date,
                 p.end_date    AS project_end_date,
                 p.status      AS project_status,
-                img.url       AS project_image_url,
                 pr.url        AS project_repository,
+                jsonb_build_object(
+                          'image_id', img.image_id,
+                          'data', img.data,
+                          'mime_type', img.mime_type
+                ) AS image,
                 jsonb_agg(
                           jsonb_build_object(
                                  'member_id', u.id,
@@ -244,12 +248,12 @@ BEGIN
                           )
                 ) AS members
         FROM projects p
-                 LEFT JOIN images img ON p.image = img.image_id
-                 LEFT JOIN project_members pm ON p.id = pm.project_id
-                 LEFT JOIN Users u ON pm.user_id = u.id
-                 LEFT JOIN project_repositories pr ON p.id = pr.project_id
-        WHERE pm.user_id = user_id_param
-        GROUP BY p.id, img.url, u.username, u.email, pr.url;
+                    JOIN Users u ON p.owner = u.id
+                    LEFT JOIN project_repositories pr ON p.id = pr.project_id
+                    LEFT JOIN images img ON p.id = img.project_id
+                    LEFT JOIN project_members pm ON p.id = pm.project_id
+            WHERE pm.user_id = user_id_param
+        GROUP BY p.id, u.username, u.email, pr.url, img.image_id, img.data, img.mime_type;
 END;
 $$ LANGUAGE plpgsql;
 
