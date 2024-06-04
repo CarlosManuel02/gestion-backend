@@ -145,7 +145,10 @@ export class ProjectsService {
       throw new NotFoundException(`Project with term ${term} not found`);
     }
 
-    return project;
+    return {
+      status: 200,
+      data: project,
+    };
   }
 
   update(id: number, updateProjectDto: UpdateProjectDto) {

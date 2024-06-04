@@ -88,7 +88,7 @@ CREATE TABLE tasks (
                        task_id       UUID NOT NULL PRIMARY KEY,
                        name          VARCHAR(255)                    NOT NULL,
                        description   TEXT,
-                       status        VARCHAR(50)                     NOT NULL CHECK ( status IN ('open', 'in_progress', 'completed', 'closed') ),
+                       status        VARCHAR(50)                     NOT NULL CHECK ( ('open', 'in_progress', 'completed', 'closed') ),
                        creation_date DATE                            NOT NULL,
                        deadline      DATE,
                        priority      INTEGER                         NOT NULL,
