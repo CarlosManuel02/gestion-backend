@@ -37,7 +37,7 @@ export class TasksService {
     return this.taskRepository.save(task);
   }
 
-  async findAll(term: string) {
+  async findAllFromUser(term: string) {
     try {
       if (isUUID(term)) {
         const tasks = await this.taskRepository.query(
@@ -137,6 +137,32 @@ export class TasksService {
         status: 500,
         message: 'Error deleting task',
       };
+    }
+  }
+
+  async findAllFromProject(term: string) {
+    try {
+      if (isUUID(term)) {
+        const tasks = await this.taskRepository.query(
+          `SELECT *
+           FROM get_all_tasks_from_project('${term}')`,
+        );
+        return {
+          tasks,
+          status: 200,
+        };
+      } else {
+        const tasks = await this.taskRepository.query(
+          `SELECT *
+           FROM get_all_tasks_from_user(null, '${term}')`,
+        );
+        return {
+          tasks,
+          status: 200,
+        };
+      }
+    } catch (error) {
+      return error;
     }
   }
 }

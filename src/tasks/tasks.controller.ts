@@ -20,9 +20,15 @@ export class TasksController {
     return this.tasksService.create(createTaskDto);
   }
 
+
   @Get('all/:term')
-  findAll(@Param('term') term: string) {
-    return this.tasksService.findAll(term);
+  findAllFromProject(@Param('term') term: string) {
+    return this.tasksService.findAllFromProject(term);
+  }
+
+  @Get('all/user/:term')
+  findAllFromUser(@Param('term') term: string) {
+    return this.tasksService.findAllFromUser(term);
   }
 
   @Get(':term')
