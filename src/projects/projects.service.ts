@@ -4,7 +4,6 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { Project } from './entities/project.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Image } from './entities/image.entity';
 
 import { v4 as uuidv4 } from 'uuid';
 import { ProjectMenbers } from './entities/projectMenbers.entity';
@@ -20,8 +19,6 @@ export class ProjectsService {
     // Inject the ProjectRepository
     @InjectRepository(Project)
     private projectRepository: Repository<Project>,
-    @InjectRepository(Image)
-    private imageRepository: Repository<Image>,
     @InjectRepository(ProjectMenbers)
     private projectMenbersRepository: Repository<ProjectMenbers>,
     @InjectRepository(ProjectRepo)
@@ -30,7 +27,7 @@ export class ProjectsService {
     private notificationService: NotificationsService,
   ) {}
 
-  async create(createProjectDto: CreateProjectDto, file) {
+  async create(createProjectDto: CreateProjectDto){
     // from String[] to json[]
     createProjectDto.members = JSON.parse(createProjectDto.members.toString());
 
@@ -55,9 +52,6 @@ export class ProjectsService {
         await this.notifyMembers([...admins, ...members], project);
         if (createProjectDto.repository_url) {
           await this.saveProjectRepo(project, createProjectDto.repository_url);
-        }
-        if (file) {
-          const img = await this.saveImage(file, project.id);
         }
         // console.log(img);
       });
@@ -247,27 +241,6 @@ export class ProjectsService {
       };
     } catch (error) {
       return error;
-    }
-  }
-
-  async saveImage(file, id: string) {
-    const image = this.imageRepository.create({
-      project_id: id,
-      data: file.buffer,
-      mime_type: file.mimetype,
-    });
-
-    try {
-      await this.imageRepository.save(image);
-      return {
-        message: 'Image saved successfully',
-        image,
-      };
-    } catch (e) {
-      return {
-        message: 'Error while saving the image',
-        e,
-      };
     }
   }
 }

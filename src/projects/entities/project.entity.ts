@@ -5,7 +5,6 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Image } from './image.entity';
 
 @Entity('projects')
 export class Project {

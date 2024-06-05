@@ -13,14 +13,6 @@ CREATE TABLE Users (
                        reset_password_expires TIMESTAMP
 );
 
--- User Image Table
-CREATE TABLE user_Image (
-                            id        UUID NOT NULL PRIMARY KEY,
-                            user_id   UUID REFERENCES Users (id),
-                            data      BYTEA                           NOT NULL,
-                            mime_type VARCHAR                         NOT NULL
-);
-
 -- Notifications Table
 CREATE TABLE notifications (
                                id         UUID NOT NULL PRIMARY KEY,
@@ -71,14 +63,6 @@ CREATE TABLE project_repositories (
                                       url        TEXT                            NOT NULL
 );
 
-
--- Images Table
-CREATE TABLE images (
-                        image_id SERIAL PRIMARY KEY,
-                        project_id UUID REFERENCES projects (id),
-                        data     BYTEA,
-                        mime_type VARCHAR
-);
 -- ===============================
 -- Task Management Tables
 -- ===============================
@@ -88,7 +72,7 @@ CREATE TABLE tasks (
                        task_id       UUID NOT NULL PRIMARY KEY,
                        name          VARCHAR(255)                    NOT NULL,
                        description   TEXT,
-                       status        VARCHAR(50)                     NOT NULL CHECK ( ('open', 'in_progress', 'completed', 'closed') ),
+                       status        VARCHAR(50)                     NOT NULL,
                        creation_date DATE                            NOT NULL,
                        deadline      DATE,
                        priority      INTEGER                         NOT NULL,
@@ -131,14 +115,8 @@ BEGIN
     RETURN QUERY
         SELECT u.id        AS user_id,
                u.username  AS username,
-               u.email     AS email,
-               jsonb_build_object(
-                       'image_id', ui.id,
-                       'data', ui.data,
-                       'mime_type', ui.mime_type
-               ) AS image
+               u.email     AS email
         FROM Users u
-                 LEFT JOIN user_Image ui ON u.id = ui.user_id
         WHERE u.id = user_id_param
            OR u.email = user_email_param;
 END;
@@ -159,7 +137,6 @@ CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_na
                       project_end_date    DATE,
                       project_status      VARCHAR,
                       project_repository  TEXT,
-                      image               JSONB,
                       members             JSONB
                   ) AS $$
 BEGIN
@@ -175,14 +152,6 @@ BEGIN
                p.end_date    AS project_end_date,
                p.status      AS project_status,
                pr.url        AS project_repository,
-               (SELECT jsonb_build_object(
-                               'image_id', img.image_id,
-                               'data', img.data,
-                               'mime_type', img.mime_type
-                       )
-                FROM images img
-                WHERE img.project_id = p.id
-                LIMIT 1) AS image,
                (SELECT jsonb_agg(
                                jsonb_build_object(
                                        'member_id', mu.id,
@@ -218,7 +187,6 @@ CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
                       project_end_date    DATE,
                       project_status      VARCHAR,
                       project_repository  TEXT,
-                      image               JSONB,
                       members             JSONB
                   ) AS $$
 BEGIN
@@ -234,11 +202,6 @@ BEGIN
                p.end_date    AS project_end_date,
                p.status      AS project_status,
                pr.url        AS project_repository,
-               jsonb_build_object(
-                       'image_id', img.image_id,
-                       'data', img.data,
-                       'mime_type', img.mime_type
-               ) AS image,
                jsonb_agg(
                        jsonb_build_object(
                                'member_id', u.id,
@@ -250,10 +213,9 @@ BEGIN
         FROM projects p
                  JOIN Users u ON p.owner = u.id
                  LEFT JOIN project_repositories pr ON p.id = pr.project_id
-                 LEFT JOIN images img ON p.id = img.project_id
                  LEFT JOIN project_members pm ON p.id = pm.project_id
         WHERE pm.user_id = user_id_param
-        GROUP BY p.id, u.username, u.email, pr.url, img.image_id, img.data, img.mime_type;
+        GROUP BY p.id, u.username, u.email, pr.url;
 END;
 $$ LANGUAGE plpgsql;
 
