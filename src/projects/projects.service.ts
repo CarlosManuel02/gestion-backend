@@ -243,4 +243,9 @@ export class ProjectsService {
       return error;
     }
   }
+
+  getProjetTasks(projectId: string) {
+    const tasks = this.projectRepository.query(`SELECT * FROM get_all_tasks_from_project('${projectId}')`);
+    return tasks;
+  }
 }
