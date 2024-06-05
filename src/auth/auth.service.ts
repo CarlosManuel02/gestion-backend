@@ -16,21 +16,18 @@ import { JwtService } from '@nestjs/jwt';
 import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { LogsService } from '../common/logs/logs.service';
-import { UserImage } from './entities/user-image.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly authRepository: Repository<User>,
-    @InjectRepository(UserImage)
-    private readonly userImageRepository: Repository<UserImage>,
     private readonly datasource: DataSource,
     private readonly jwtService: JwtService,
     public readonly logService: LogsService,
   ) {}
 
-  async create(createAuthDto: CreateAuthDto, file) {
+  async create(createAuthDto: CreateAuthDto) {
     createAuthDto.id = uuidv4();
 
     const user = await this.authRepository.findOne({
@@ -56,10 +53,6 @@ export class AuthService {
         const log = await this.logService.create(user.id, 'User created');
         if (!log) {
           throw new BadRequestException('Error while creating the log');
-        }
-        const img = await this.saveImage(file, user.id);
-        if (img.message !== 'Image saved successfully') {
-          throw new BadRequestException('Error while saving the image');
         }
       });
       return {
@@ -118,7 +111,7 @@ export class AuthService {
     return user;
   }
 
-  async update(id: string, updateAuthDto: UpdateAuthDto, file) {
+  async update(id: string, updateAuthDto: UpdateAuthDto) {
     const user = await this.authRepository.preload({
       id: id,
       ...updateAuthDto,
@@ -163,20 +156,17 @@ export class AuthService {
   async login(createAuthDto: CreateAuthDto) {
     const { email, password } = createAuthDto;
     const user = await this.findBy(email);
-    let img: { message: string } | UserImage;
 
     if (user && (await user.validatePassword(password))) {
       const token = await this.generateJWT(user);
       await this.authRepository.save(user).then(async (user) => {
         await this.logService.create(user.id, 'User logged in');
-        img = await this.getPerfileImg(user.id);
       });
       return {
         user: {
           id: user.id,
           username: user.username,
           email: user.email,
-          image: img,
         },
         token,
         status: 200,
@@ -195,13 +185,11 @@ export class AuthService {
     const user = await this.findBy(payload.email);
     if (!user) throw new NotFoundException('User not found');
     const newToken = await this.generateJWT(user);
-    const img = await this.getPerfileImg(user.id);
     return {
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
-        image: img,
       },
       token: newToken,
       status: 200,
@@ -284,43 +272,5 @@ export class AuthService {
 
   private genetareCode() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
-  }
-
-  private async saveImage(
-    file: { buffer: any; mimetype: any },
-    userId: string,
-  ) {
-    const image = this.userImageRepository.create({
-      id: uuidv4(),
-      user_id: userId,
-      data: file.buffer,
-      mime_type: file.mimetype,
-    });
-
-    try {
-      await this.userImageRepository.save(image);
-      return {
-        message: 'Image saved successfully',
-        image,
-      };
-    } catch (e) {
-      return {
-        message: 'Error while saving the image',
-        e,
-      };
-    }
-  }
-
-  private async getPerfileImg(id: string) {
-    const img = await this.userImageRepository.findOne({
-      where: { user_id: id },
-    });
-
-    if (!img) {
-      return {
-        message: 'Image not found',
-      };
-    }
-    return img;
   }
 }

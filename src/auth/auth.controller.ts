@@ -26,9 +26,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('new')
-  @UseInterceptors(FileInterceptor('file'))
-  Register(@UploadedFile() file, @Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto, file);
+  Register(createAuthDto: CreateAuthDto) {
+    return this.authService.create(createAuthDto);
   }
 
   @Post('login')
@@ -57,14 +56,12 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard())
-  @UseInterceptors(FileInterceptor('file')) // Aquí se define el nombre del campo del formulario que contiene el archivo
   @Patch('/update/:id')
   update(
     @Param('id') id: string,
     @Body() updateAuthDto: UpdateAuthDto,
-    @UploadedFile() file,
   ) {
-    return this.authService.update(id, updateAuthDto, file);
+    return this.authService.update(id, updateAuthDto);
   }
 
   @UseGuards(AuthGuard())

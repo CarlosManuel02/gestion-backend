@@ -9,7 +9,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { CommonModule } from '../common/common.module';
 import { LogsModule } from '../common/logs/logs.module';
 import { ConfigModule } from '@nestjs/config';
-import {UserImage} from "./entities/user-image.entity";
 
 @Module({
   imports: [
@@ -23,7 +22,7 @@ import {UserImage} from "./entities/user-image.entity";
       },
     }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([User, UserImage]),
+    TypeOrmModule.forFeature([User]),
     CommonModule,
     LogsModule,
   ],
