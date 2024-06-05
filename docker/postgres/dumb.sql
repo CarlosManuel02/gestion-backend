@@ -108,8 +108,7 @@ CREATE OR REPLACE FUNCTION get_user_details(user_id_param UUID, user_email_param
     RETURNS TABLE (
                       user_id   UUID,
                       username  VARCHAR,
-                      email     VARCHAR,
-                      image     jsonb
+                      email     VARCHAR
                   ) AS $$
 BEGIN
     RETURN QUERY
