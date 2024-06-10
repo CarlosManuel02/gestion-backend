@@ -26,7 +26,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('new')
-  Register(createAuthDto: CreateAuthDto) {
+  Register(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.create(createAuthDto);
   }
 
