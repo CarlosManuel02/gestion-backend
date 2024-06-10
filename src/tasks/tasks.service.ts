@@ -18,7 +18,7 @@ export class TasksService {
   ) {}
 
   async create(createTaskDto: CreateTaskDto) {
-    const user = await this.authService.findBy(createTaskDto.assignment);
+    const { user } = await this.authService.findBy(createTaskDto.assignment);
     if (!user) {
       return {
         message: 'The user does not exist',
@@ -101,7 +101,7 @@ export class TasksService {
         task_id: id,
         ...updateTaskDto,
       });
-      const user = await this.authService.findBy(task.assignment);
+      const { user } = await this.authService.findBy(task.assignment);
       task.assignment = user.id;
       await this.taskRepository.save(task);
       return {
