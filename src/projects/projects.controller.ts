@@ -31,6 +31,11 @@ export class ProjectsController {
     return this.projectsService.getProjectMembers(projectId);
   }
 
+  @Get('tasks/:projectId')
+  getProjetTasks(@Param('projectId') projectId: string) {
+    return this.projectsService.getProjetTasks(projectId);
+  }
+
   @Get('all/:term')
   findAll(@Param('term') term: string) {
     return this.projectsService.findAll(term);

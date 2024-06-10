@@ -108,7 +108,10 @@ export class AuthService {
     } catch (e) {
       throw new BadRequestException('No user found with the given term');
     }
-    return user;
+    return {
+      user,
+      status: 200,
+    };
   }
 
   async update(id: string, updateAuthDto: UpdateAuthDto) {
@@ -155,7 +158,7 @@ export class AuthService {
 
   async login(createAuthDto: CreateAuthDto) {
     const { email, password } = createAuthDto;
-    const user = await this.findBy(email);
+    const { user } = await this.findBy(email);
 
     if (user && (await user.validatePassword(password))) {
       const token = await this.generateJWT(user);
@@ -182,7 +185,7 @@ export class AuthService {
     const payload = await this.jwtService.verify(token, {
       secret: process.env.JWT_SECRET,
     });
-    const user = await this.findBy(payload.email);
+    const { user } = await this.findBy(payload.email);
     if (!user) throw new NotFoundException('User not found');
     const newToken = await this.generateJWT(user);
     return {
@@ -207,7 +210,7 @@ export class AuthService {
   async requestResetPassword(requestResetPasswordDto: RequestResetPasswordDto) {
     const { email } = requestResetPasswordDto;
 
-    const user = await this.findBy(email);
+    const { user } = await this.findBy(email);
     if (!user) {
       throw new UnauthorizedException();
     }
