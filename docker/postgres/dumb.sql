@@ -462,6 +462,7 @@ BEGIN
                tc.created_at AS created_at
         FROM task_comments tc
                  JOIN Users u ON tc.user_id = u.id
-        WHERE tc.task_id = task_id_param;
+        WHERE tc.task_id = task_id_param
+        ORDER BY tc.created_at DESC;
 END;
 $$ LANGUAGE plpgsql;
