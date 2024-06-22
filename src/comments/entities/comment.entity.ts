@@ -19,6 +19,10 @@ export class TaskComment {
   @Column('text')
   comment: string;
 
+  @Column('uuid')
+  replay_to: string;
+
+
   @CreateDateColumn({ type: 'timestamp' })
   created_at: Date;
 }

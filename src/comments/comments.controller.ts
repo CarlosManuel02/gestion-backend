@@ -15,14 +15,14 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
-  @Post()
+  @Post('new')
   create(@Body() createCommentDto: CreateCommentDto) {
     return this.commentsService.create(createCommentDto);
   }
 
-  @Get()
-  findAll() {
-    return this.commentsService.findAll();
+  @Get('all/:task_id')
+  findAll(@Param('task_id') task_id: string) {
+    return this.commentsService.findAll(task_id);
   }
 
   @Get(':id')

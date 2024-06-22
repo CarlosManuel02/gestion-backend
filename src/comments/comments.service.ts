@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TaskComment } from './entities/comment.entity';
 import {AuthService} from "../auth/auth.service";
+import { v4 as uuidv4 } from 'uuid';
+
 
 @Injectable()
 export class CommentsService {
@@ -13,12 +15,25 @@ export class CommentsService {
     private commentRepository: Repository<TaskComment>,
     private authService: AuthService,
   ) {}
-  create(createCommentDto: CreateCommentDto) {
-    return 'This action adds a new comment';
+  async create(createCommentDto: CreateCommentDto) {
+
+    const comment = new TaskComment();
+    comment.id = uuidv4();
+    comment.comment = createCommentDto.comment;
+    comment.replay_to = createCommentDto.replay_to || null;
+    comment.task_id = createCommentDto.task_id;
+    comment.user_id = createCommentDto.user_id;
+    comment.created_at = new Date();
+
+    return await this.commentRepository.save(comment);
+
   }
 
-  findAll() {
-    return `This action returns all comments`;
+  findAll(task_id: string) {
+
+    return this.commentRepository.query(`SELECT * FROM get_all_commets_from_user('${task_id}')`);
+
+
   }
 
   findOne(id: number) {

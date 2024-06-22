@@ -97,6 +97,7 @@ CREATE TABLE task_comments (
                                task_id    UUID REFERENCES tasks (task_id),
                                user_id    UUID REFERENCES Users (id),
                                comment    TEXT,
+                               replay_to  UUID REFERENCES task_comments (id) default NULL,
                                created_at TIMESTAMP
 );
 
@@ -438,5 +439,29 @@ BEGIN
         FROM project_members pm
                  JOIN Users u ON pm.user_id = u.id
         WHERE pm.project_id = project_id_param;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to get all comments from a task
+CREATE OR REPLACE FUNCTION get_all_commets_from_user(task_id_param UUID)
+    RETURNS TABLE (
+                     id         UUID,
+                     user_id    UUID,
+                     username   VARCHAR,
+                     task_id    UUID,
+                     comment   TEXT,
+                     created_at TIMESTAMP
+                    ) AS $$
+BEGIN
+    RETURN QUERY
+        SELECT tc.id         AS id,
+               tc.user_id    AS user_id,
+               u.username    AS username,
+               tc.task_id    AS task_id,
+               tc.comment    AS comment,
+               tc.created_at AS created_at
+        FROM task_comments tc
+                 JOIN Users u ON tc.user_id = u.id
+        WHERE tc.task_id = task_id_param;
 END;
 $$ LANGUAGE plpgsql;
