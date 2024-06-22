@@ -1,4 +1,4 @@
-import {Controller, Get, Param, Post, Sse} from '@nestjs/common';
+import {Body, Controller, Get, Param, Post, Sse} from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { map, Observable } from 'rxjs';
 import { Notification } from './entities/notification.entity';
