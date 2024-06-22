@@ -61,7 +61,32 @@ export class NotificationsService {
     }
   }
 
-  markAsRead(id: string) {
-  //   TODO: Implement this method
+  async markAsRead(id: string) {
+    let notification: Notification;
+
+    try {
+      notification = await this.notificationRepository.findOne({
+        where: { id },
+      });
+      if (notification) {
+        notification.read = true;
+        await this.notificationRepository.save(notification);
+        return {
+          status: 200,
+          message: 'Notification marked as read',
+        };
+      } else {
+        return {
+          status: 404,
+          message: 'Notification not found',
+        };
+      }
+    } catch (error) {
+      console.log(error);
+      return {
+        status: 500,
+        message: error,
+      };
+    }
   }
 }
