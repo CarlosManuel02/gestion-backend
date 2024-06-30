@@ -18,6 +18,7 @@ export class ProjectsController {
 
   @Post('create')
   create(@Body() createProjectDto: CreateProjectDto) {
+    console.log('createProjectDto', createProjectDto);
     return this.projectsService.create(createProjectDto);
   }
 
@@ -29,6 +30,11 @@ export class ProjectsController {
   @Get('members/:projectId')
   getProjectMembers(@Param('projectId') projectId: string) {
     return this.projectsService.getProjectMembers(projectId);
+  }
+
+  @Delete('removeMember')
+  removeMember(@Body() addMemberDto: AddMemberDto) {
+    return this.projectsService.removeMember(addMemberDto);
   }
 
   @Get('tasks/:projectId')

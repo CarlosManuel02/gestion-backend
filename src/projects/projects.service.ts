@@ -27,14 +27,14 @@ export class ProjectsService {
     private notificationService: NotificationsService,
   ) {}
 
-  async create(createProjectDto: CreateProjectDto){
+  async create(createProjectDto: CreateProjectDto) {
     // from String[] to json[]
     createProjectDto.members = JSON.parse(createProjectDto.members.toString());
 
     createProjectDto.id = uuidv4();
     createProjectDto.start_date = new Date();
     createProjectDto.end_date = new Date();
-    const { admins, members } = await this.getAdmins(createProjectDto);
+    const { admins, members, owner } = await this.getAdmins(createProjectDto);
     createProjectDto.members = [...admins, ...members];
     const project = this.projectRepository.create({
       id: createProjectDto.id,
@@ -42,7 +42,7 @@ export class ProjectsService {
       description: createProjectDto.description,
       start_date: createProjectDto.start_date,
       end_date: createProjectDto.end_date,
-      owner: createProjectDto.owner,
+      owner: owner.id,
       project_key: createProjectDto.project_key,
       status: createProjectDto.status,
     });
@@ -210,16 +210,20 @@ export class ProjectsService {
   async getAdmins(createProjectDto: CreateProjectDto) {
     const members = [];
     const admins = [];
+    const owner: { id: string; role: string } = { id: '', role: '' };
     if (createProjectDto.members) {
       for (const member of createProjectDto.members) {
         if (member.role === 'member') {
           members.push(member);
-        } else {
+        } else if (member.role === 'admin') {
           admins.push(member);
+        } else if (member.role === 'owner') {
+          owner['id'] = member.id;
+          owner['role'] = member.role;
         }
       }
     }
-    return { admins, members };
+    return { admins, members, owner };
   }
 
   async getProjectMembers(projectId: string) {
@@ -245,7 +249,32 @@ export class ProjectsService {
   }
 
   getProjetTasks(projectId: string) {
-    const tasks = this.projectRepository.query(`SELECT * FROM get_all_tasks_from_project('${projectId}')`);
+    const tasks = this.projectRepository.query(
+      `SELECT * FROM get_all_tasks_from_project('${projectId}')`,
+    );
     return tasks;
+  }
+
+  async removeMember(addMemberDto: AddMemberDto) {
+    const member = this.projectMenbersRepository.findOne({
+      where: { user_id: addMemberDto.id, project_id: addMemberDto.project_id },
+    });
+    if (!member) {
+      return {
+        message: `Member with id ${addMemberDto.id} not found in project with id ${addMemberDto.project_id}`,
+      };
+    }
+
+    try {
+      await this.projectMenbersRepository.delete({
+        user_id: addMemberDto.id,
+        project_id: addMemberDto.project_id,
+      });
+      return {
+        message: `Member with id ${addMemberDto.id} removed from project with id ${addMemberDto.project_id}`,
+      };
+    } catch (error) {
+      return error;
+    }
   }
 }
