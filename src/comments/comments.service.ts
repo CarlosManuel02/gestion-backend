@@ -4,7 +4,8 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TaskComment } from './entities/comment.entity';
-import {AuthService} from "../auth/auth.service";
+import { AuthService } from '../auth/auth.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class CommentsService {
@@ -13,23 +14,44 @@ export class CommentsService {
     private commentRepository: Repository<TaskComment>,
     private authService: AuthService,
   ) {}
-  create(createCommentDto: CreateCommentDto) {
-    return 'This action adds a new comment';
+  async create(createCommentDto: CreateCommentDto) {
+    const comment = new TaskComment();
+    comment.id = uuidv4();
+    comment.comment = createCommentDto.comment;
+    comment.replay_to = createCommentDto.replay_to || null;
+    comment.task_id = createCommentDto.task_id;
+    comment.user_id = createCommentDto.user_id;
+    comment.created_at = new Date();
+
+    return await this.commentRepository.save(comment);
   }
 
-  findAll() {
-    return `This action returns all comments`;
+  findAll(task_id: string) {
+    return this.commentRepository.query(
+      `SELECT * FROM get_all_commets_from_user('${task_id}')`,
+    );
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} comment`;
   }
 
-  update(id: number, updateCommentDto: UpdateCommentDto) {
+  update(id: string, updateCommentDto: UpdateCommentDto) {
     return `This action updates a #${id} comment`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} comment`;
+  remove(id: string) {
+    const comment = this.commentRepository.findOne({
+      where: { task_id: id },
+    });
+    if (comment) {
+      this.commentRepository.delete(id);
+      return { deleted: true };
+    } else {
+      return {
+        deleted: false,
+        message: 'Comment not found',
+      };
+    }
   }
 }

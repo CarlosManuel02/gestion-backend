@@ -27,7 +27,8 @@ export class ProjectsService {
     private notificationService: NotificationsService,
   ) {}
 
-  async create(createProjectDto: CreateProjectDto){
+  async create(createProjectDto: CreateProjectDto) {
+    console.log(createProjectDto);
     // from String[] to json[]
     createProjectDto.members = JSON.parse(createProjectDto.members.toString());
 
@@ -44,26 +45,30 @@ export class ProjectsService {
       end_date: createProjectDto.end_date,
       owner: createProjectDto.owner,
       project_key: createProjectDto.project_key,
-      status: createProjectDto.status,
+      status: 'active',
     });
     try {
       await this.projectRepository.save(project).then(async () => {
-        await this.validateUser(createProjectDto, project);
         await this.notifyMembers([...admins, ...members], project);
         if (createProjectDto.repository_url) {
           await this.saveProjectRepo(project, createProjectDto.repository_url);
         }
         // console.log(img);
+        await this.validateUser(createProjectDto, project);
       });
     } catch (error) {
       return error;
     }
-    return project;
+    return {
+      status: 200,
+      message: 'Project created successfully',
+      project,
+    };
   }
 
   private async notifyMembers(members: any[], project: Project) {
     for (const member of members) {
-      console.log(member);
+      // console.log(member);
       await this.notificationService.create({
         title: `Project ${project.name}`,
         from_user: project.owner,
@@ -86,9 +91,14 @@ export class ProjectsService {
             message: `User with id ${member.id} not found`,
           };
         }
-        await this.addMemberToProject(project.id, member);
+        const result = await this.addMemberToProject(project.id, member);
+        console.log('result', result);
       }
     }
+    await this.addMemberToProject(project.id, {
+      id: project.owner,
+      role: 'owner',
+    });
   }
 
   async findAll(term: string) {
@@ -214,7 +224,7 @@ export class ProjectsService {
       for (const member of createProjectDto.members) {
         if (member.role === 'member') {
           members.push(member);
-        } else {
+        } else if (member.role === 'admin') {
           admins.push(member);
         }
       }
@@ -245,7 +255,32 @@ export class ProjectsService {
   }
 
   getProjetTasks(projectId: string) {
-    const tasks = this.projectRepository.query(`SELECT * FROM get_all_tasks_from_project('${projectId}')`);
+    const tasks = this.projectRepository.query(
+      `SELECT * FROM get_all_tasks_from_project('${projectId}')`,
+    );
     return tasks;
+  }
+
+  async removeMember(addMemberDto: AddMemberDto) {
+    const member = this.projectMenbersRepository.findOne({
+      where: { user_id: addMemberDto.id, project_id: addMemberDto.project_id },
+    });
+    if (!member) {
+      return {
+        message: `Member with id ${addMemberDto.id} not found in project with id ${addMemberDto.project_id}`,
+      };
+    }
+
+    try {
+      await this.projectMenbersRepository.delete({
+        user_id: addMemberDto.id,
+        project_id: addMemberDto.project_id,
+      });
+      return {
+        message: `Member with id ${addMemberDto.id} removed from project with id ${addMemberDto.project_id}`,
+      };
+    } catch (error) {
+      return error;
+    }
   }
 }

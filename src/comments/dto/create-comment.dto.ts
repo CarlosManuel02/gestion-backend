@@ -1,4 +1,4 @@
-import { IsUUID, IsString, IsNotEmpty } from 'class-validator';
+import {IsUUID, IsString, IsNotEmpty, IsOptional} from 'class-validator';
 
 export class CreateCommentDto {
   @IsUUID()
@@ -12,4 +12,9 @@ export class CreateCommentDto {
   @IsString()
   @IsNotEmpty()
   comment: string;
+
+  @IsString()
+  @IsOptional()
+  replay_to?: string;
+
 }
