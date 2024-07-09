@@ -16,6 +16,9 @@ export class CreateProjectDto {
   @IsNotEmpty()
   name: string;
 
+  @IsString()
+  @IsNotEmpty()
+  owner: string;
 
   @IsOptional()
   @IsString()
@@ -29,17 +32,17 @@ export class CreateProjectDto {
   @IsDateString()
   end_date?: Date;
 
-  @IsString()
-  @IsNotEmpty()
-  status: string;
+  // @IsString()
+  // @IsNotEmpty()
+  // status: string;
 
   // @IsArray()
   @IsNotEmpty()
   members: any[];
 
-  @IsString()
-  @IsNotEmpty()
-  owner: string;
+  // @IsString()
+  // @IsNotEmpty()
+  // owner: string;
 
   @IsString()
   @IsNotEmpty()

@@ -28,13 +28,14 @@ export class ProjectsService {
   ) {}
 
   async create(createProjectDto: CreateProjectDto) {
+    console.log(createProjectDto);
     // from String[] to json[]
     createProjectDto.members = JSON.parse(createProjectDto.members.toString());
 
     createProjectDto.id = uuidv4();
     createProjectDto.start_date = new Date();
     createProjectDto.end_date = new Date();
-    const { admins, members, owner } = await this.getAdmins(createProjectDto);
+    const { admins, members } = await this.getAdmins(createProjectDto);
     createProjectDto.members = [...admins, ...members];
     const project = this.projectRepository.create({
       id: createProjectDto.id,
@@ -42,28 +43,32 @@ export class ProjectsService {
       description: createProjectDto.description,
       start_date: createProjectDto.start_date,
       end_date: createProjectDto.end_date,
-      owner: owner.id,
+      owner: createProjectDto.owner,
       project_key: createProjectDto.project_key,
-      status: createProjectDto.status,
+      status: 'active',
     });
     try {
       await this.projectRepository.save(project).then(async () => {
-        await this.validateUser(createProjectDto, project);
         await this.notifyMembers([...admins, ...members], project);
         if (createProjectDto.repository_url) {
           await this.saveProjectRepo(project, createProjectDto.repository_url);
         }
         // console.log(img);
+        await this.validateUser(createProjectDto, project);
       });
     } catch (error) {
       return error;
     }
-    return project;
+    return {
+      status: 200,
+      message: 'Project created successfully',
+      project,
+    };
   }
 
   private async notifyMembers(members: any[], project: Project) {
     for (const member of members) {
-      console.log(member);
+      // console.log(member);
       await this.notificationService.create({
         title: `Project ${project.name}`,
         from_user: project.owner,
@@ -86,9 +91,14 @@ export class ProjectsService {
             message: `User with id ${member.id} not found`,
           };
         }
-        await this.addMemberToProject(project.id, member);
+        const result = await this.addMemberToProject(project.id, member);
+        console.log('result', result);
       }
     }
+    await this.addMemberToProject(project.id, {
+      id: project.owner,
+      role: 'owner',
+    });
   }
 
   async findAll(term: string) {
@@ -210,20 +220,16 @@ export class ProjectsService {
   async getAdmins(createProjectDto: CreateProjectDto) {
     const members = [];
     const admins = [];
-    const owner: { id: string; role: string } = { id: '', role: '' };
     if (createProjectDto.members) {
       for (const member of createProjectDto.members) {
         if (member.role === 'member') {
           members.push(member);
         } else if (member.role === 'admin') {
           admins.push(member);
-        } else if (member.role === 'owner') {
-          owner['id'] = member.id;
-          owner['role'] = member.role;
         }
       }
     }
-    return { admins, members, owner };
+    return { admins, members };
   }
 
   async getProjectMembers(projectId: string) {

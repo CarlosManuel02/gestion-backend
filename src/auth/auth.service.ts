@@ -87,7 +87,7 @@ export class AuthService {
   }
 
   async findBy(term: string) {
-    let user: User;
+    let user: User | null = null;
     try {
       if (isUUID(term)) {
         user = await this.authRepository.query(
@@ -101,9 +101,6 @@ export class AuthService {
             username: term,
           })
           .getOne();
-      }
-      if (!user) {
-        return null;
       }
     } catch (e) {
       throw new BadRequestException('No user found with the given term');
