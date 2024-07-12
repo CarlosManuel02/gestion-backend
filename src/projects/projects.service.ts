@@ -46,6 +46,7 @@ export class ProjectsService {
       owner: createProjectDto.owner,
       project_key: createProjectDto.project_key,
       status: 'active',
+      visibility: createProjectDto.visibility,
     });
     try {
       await this.projectRepository.save(project).then(async () => {

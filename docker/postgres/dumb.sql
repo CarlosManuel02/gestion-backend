@@ -45,6 +45,7 @@ CREATE TABLE projects (
                           start_date  DATE                            NOT NULL,
                           end_date    DATE,
                           status      VARCHAR(50)                     NOT NULL CHECK ( status IN ('active', 'inactive', 'completed') ),
+                          visibility  BOOLEAN                         NOT NULL DEFAULT TRUE,
                           project_key VARCHAR(50)
 );
 
@@ -105,6 +106,8 @@ CREATE TABLE task_comments (
 -- Functions
 -- ===============================
 
+-- Function to get user details
+DROP FUNCTION IF EXISTS get_user_details(UUID, VARCHAR);
 CREATE OR REPLACE FUNCTION get_user_details(user_id_param UUID, user_email_param VARCHAR)
     RETURNS TABLE (
                       user_id   UUID,
@@ -124,6 +127,7 @@ $$ LANGUAGE plpgsql;
 
 
 -- Function to get project details
+DROP FUNCTION IF EXISTS get_project_details(UUID, VARCHAR);
 CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_name_param VARCHAR)
     RETURNS TABLE (
                       project_id          UUID,
@@ -136,6 +140,7 @@ CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_na
                       project_start_date  DATE,
                       project_end_date    DATE,
                       project_status      VARCHAR,
+                      project_visibility  BOOLEAN,
                       project_repository  TEXT,
                       members             JSONB
                   ) AS $$
@@ -151,6 +156,7 @@ BEGIN
                p.start_date  AS project_start_date,
                p.end_date    AS project_end_date,
                p.status      AS project_status,
+               p.visibility  AS project_visibility,
                pr.url        AS project_repository,
                (SELECT jsonb_agg(
                                jsonb_build_object(
@@ -174,6 +180,7 @@ $$ LANGUAGE plpgsql;
 
 
 -- Function to get all projects from a user
+DROP FUNCTION IF EXISTS get_all_projects_from_user(UUID);
 CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
     RETURNS TABLE (
                       project_id          UUID,
@@ -186,6 +193,7 @@ CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
                       project_start_date  DATE,
                       project_end_date    DATE,
                       project_status      VARCHAR,
+                      project_visibility  BOOLEAN,
                       project_repository  TEXT,
                       members             JSONB
                   ) AS $$
@@ -201,6 +209,7 @@ BEGIN
                p.start_date  AS project_start_date,
                p.end_date    AS project_end_date,
                p.status      AS project_status,
+               p.visibility  AS project_visibility,
                pr.url        AS project_repository,
                jsonb_agg(
                        jsonb_build_object(
@@ -220,6 +229,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all tasks from a project
+DROP FUNCTION IF EXISTS get_all_tasks_from_project(UUID);
 CREATE OR REPLACE FUNCTION get_all_tasks_from_project(project_id_param UUID)
     RETURNS TABLE (
                       task_id            UUID,
@@ -247,6 +257,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all tasks from a user
+DROP FUNCTION IF EXISTS get_all_tasks_from_user(UUID, VARCHAR);
 CREATE OR REPLACE FUNCTION get_all_tasks_from_user(user_id_param UUID, user_email_param VARCHAR)
     RETURNS TABLE (
                       task_id            UUID,
@@ -281,6 +292,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all tasks from a user and project
+DROP FUNCTION IF EXISTS get_all_tasks_from_user_and_project(UUID, UUID);
 CREATE OR REPLACE FUNCTION get_all_tasks_from_user_and_project(user_id_param UUID, project_id_param UUID)
     RETURNS TABLE (
                       task_id            UUID,
@@ -309,6 +321,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get task details
+DROP FUNCTION IF EXISTS get_task_details(UUID);
 CREATE OR REPLACE FUNCTION get_task_details(task_id_param UUID)
     RETURNS TABLE (
                       task_id            UUID,
@@ -346,6 +359,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all attachments from a task
+DROP FUNCTION IF EXISTS get_all_attachments_from_task(UUID);
 CREATE OR REPLACE FUNCTION get_all_attachments_from_task(task_id_param UUID)
     RETURNS TABLE (
                       attachment_id UUID,
@@ -367,6 +381,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all comments from a task
+DROP FUNCTION IF EXISTS get_all_comments_from_task(UUID);
 CREATE OR REPLACE FUNCTION get_all_comments_from_task(task_id_param UUID)
     RETURNS TABLE (
                       comment_id UUID,
@@ -393,6 +408,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all notifications from a user
+DROP FUNCTION IF EXISTS get_all_notifications_from_user(UUID);
 CREATE OR REPLACE FUNCTION get_all_notifications_from_user(user_id_param UUID)
     RETURNS TABLE (
                       notification_id UUID,
@@ -423,6 +439,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all project's members
+DROP FUNCTION IF EXISTS get_all_project_members(UUID);
 CREATE OR REPLACE FUNCTION get_all_project_members(project_id_param UUID)
     RETURNS TABLE (
                       member_id   UUID,
@@ -443,6 +460,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all comments from a task
+DROP FUNCTION IF EXISTS get_all_commets_from_user(UUID);
 CREATE OR REPLACE FUNCTION get_all_commets_from_user(task_id_param UUID)
     RETURNS TABLE (
                      id         UUID,
