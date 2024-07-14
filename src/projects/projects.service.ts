@@ -30,8 +30,11 @@ export class ProjectsService {
   async create(createProjectDto: CreateProjectDto) {
     console.log(createProjectDto);
     // from String[] to json[]
-    createProjectDto.members = JSON.parse(createProjectDto.members.toString());
-
+    if (createProjectDto.members) {
+      createProjectDto.members = JSON.parse(createProjectDto.members.toString());
+    } else {
+      createProjectDto.members = [];
+    }
     createProjectDto.id = uuidv4();
     createProjectDto.start_date = new Date();
     createProjectDto.end_date = new Date();
@@ -283,5 +286,21 @@ export class ProjectsService {
     } catch (error) {
       return error;
     }
+  }
+
+  async getPublicProjects() {
+    let projects: Project[];
+
+    try {
+      projects = await this.projectRepository.query(`SELECT *
+                                                     FROM get_all_public_projects()`);
+    } catch (error) {
+      throw new NotFoundException('No public projects found');
+    }
+
+    return {
+      status: 200,
+      data: projects,
+    };
   }
 }

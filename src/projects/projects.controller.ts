@@ -32,6 +32,11 @@ export class ProjectsController {
     return this.projectsService.getProjectMembers(projectId);
   }
 
+  @Get('public')
+  getPublicProjects() {
+    return this.projectsService.getPublicProjects();
+  }
+
   @Delete('removeMember')
   removeMember(@Body() addMemberDto: AddMemberDto) {
     return this.projectsService.removeMember(addMemberDto);

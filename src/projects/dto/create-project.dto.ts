@@ -37,7 +37,7 @@ export class CreateProjectDto {
   // status: string;
 
   // @IsArray()
-  @IsNotEmpty()
+  @IsOptional()
   members: any[];
 
   @IsBoolean()

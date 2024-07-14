@@ -484,3 +484,52 @@ BEGIN
         ORDER BY tc.created_at DESC;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Function to get all public projects
+DROP FUNCTION IF EXISTS get_all_public_projects();
+CREATE OR REPLACE FUNCTION get_all_public_projects()
+    RETURNS TABLE (
+                      project_id          UUID,
+                      project_name        VARCHAR,
+                      project_key         VARCHAR,
+                      project_owner_id    UUID,
+                      project_owner_name  VARCHAR,
+                      project_owner_email VARCHAR,
+                      project_description TEXT,
+                      project_start_date  DATE,
+                      project_end_date    DATE,
+                      project_status      VARCHAR,
+                      project_visibility  BOOLEAN,
+                      project_repository  TEXT,
+                      members             JSONB
+                  ) AS $$
+BEGIN
+    RETURN QUERY
+        SELECT p.id          AS project_id,
+               p.name        AS project_name,
+               p.project_key AS project_key,
+               p.owner       AS project_owner_id,
+               u.username    AS project_owner_name,
+               u.email       AS project_owner_email,
+               p.description AS project_description,
+               p.start_date  AS project_start_date,
+               p.end_date    AS project_end_date,
+               p.status      AS project_status,
+               p.visibility  AS project_visibility,
+               pr.url        AS project_repository,
+               jsonb_agg(
+                       jsonb_build_object(
+                               'member_id', u.id,
+                               'member_username', u.username,
+                               'member_email', u.email,
+                               'member_role', pm.role
+                       )
+               ) AS members
+        FROM projects p
+                 JOIN Users u ON p.owner = u.id
+                 LEFT JOIN project_repositories pr ON p.id = pr.project_id
+                 LEFT JOIN project_members pm ON p.id = pm.project_id
+        WHERE p.visibility = TRUE
+        GROUP BY p.id, u.username, u.email, pr.url;
+END;
+$$ LANGUAGE plpgsql;
