@@ -54,6 +54,7 @@ CREATE TABLE project_members (
                                  id         UUID NOT NULL PRIMARY KEY,
                                  project_id UUID REFERENCES projects (id),
                                  user_id    UUID REFERENCES Users (id),
+                                 join_date  DATE                            NOT NULL,
                                  role       VARCHAR(50)                     NOT NULL
 );
 
@@ -163,7 +164,8 @@ BEGIN
                                        'member_id', mu.id,
                                        'member_username', mu.username,
                                        'member_email', mu.email,
-                                       'member_role', pm.role
+                                       'member_role', pm.role,
+                                       'join_date', pm.join_date
                                )
                        )
                 FROM project_members pm
@@ -216,7 +218,8 @@ BEGIN
                                'member_id', u.id,
                                'member_username', u.username,
                                'member_email', u.email,
-                               'member_role', pm.role
+                               'member_role', pm.role,
+                               'join_date', pm.join_date
                        )
                ) AS members
         FROM projects p
@@ -445,14 +448,16 @@ CREATE OR REPLACE FUNCTION get_all_project_members(project_id_param UUID)
                       member_id   UUID,
                       member_name VARCHAR,
                       member_email VARCHAR,
-                      member_role VARCHAR
+                      member_role VARCHAR,
+                      join_date   DATE
                   ) AS $$
 BEGIN
     RETURN QUERY
         SELECT u.id       AS member_id,
                u.username AS member_name,
                u.email    AS member_email,
-               pm.role     AS member_role
+               pm.role     AS member_role,
+               pm.join_date AS join_date
         FROM project_members pm
                  JOIN Users u ON pm.user_id = u.id
         WHERE pm.project_id = project_id_param;

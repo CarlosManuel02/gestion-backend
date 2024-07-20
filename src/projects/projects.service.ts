@@ -31,7 +31,9 @@ export class ProjectsService {
     console.log(createProjectDto);
     // from String[] to json[]
     if (createProjectDto.members) {
-      createProjectDto.members = JSON.parse(createProjectDto.members.toString());
+      createProjectDto.members = JSON.parse(
+        createProjectDto.members.toString(),
+      );
     } else {
       createProjectDto.members = [];
     }
@@ -185,6 +187,7 @@ export class ProjectsService {
       project_id: project_id,
       user_id: member.id,
       role: member.role,
+      join_date: Date.now().toLocaleString(),
     });
     try {
       await this.projectMenbersRepository.save(projectMember).then((res) => {
