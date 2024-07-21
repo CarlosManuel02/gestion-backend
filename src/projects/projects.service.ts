@@ -284,6 +284,7 @@ export class ProjectsService {
         project_id: addMemberDto.project_id,
       });
       return {
+        status: 200,
         message: `Member with id ${addMemberDto.id} removed from project with id ${addMemberDto.project_id}`,
       };
     } catch (error) {
@@ -304,6 +305,23 @@ export class ProjectsService {
     return {
       status: 200,
       data: projects,
+    };
+  }
+
+  async checkMember(addMemberDto: AddMemberDto) {
+    const member = this.projectMenbersRepository.findOne({
+      where: { user_id: addMemberDto.id, project_id: addMemberDto.project_id },
+    });
+    if (!member) {
+      return {
+        status: 404,
+        message: `Member with id ${addMemberDto.id} not found in project with id ${addMemberDto.project_id}`,
+      };
+    }
+
+    return {
+      status: 200,
+      message: 'Member found in project',
     };
   }
 }

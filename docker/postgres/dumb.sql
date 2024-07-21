@@ -72,6 +72,7 @@ CREATE TABLE project_repositories (
 -- Tasks Table
 CREATE TABLE tasks (
                        task_id       UUID NOT NULL PRIMARY KEY,
+                       task_key      VARCHAR(10)                     NOT NULL,
                        name          VARCHAR(255)                    NOT NULL,
                        description   TEXT,
                        status        VARCHAR(50)                     NOT NULL,
@@ -236,6 +237,7 @@ DROP FUNCTION IF EXISTS get_all_tasks_from_project(UUID);
 CREATE OR REPLACE FUNCTION get_all_tasks_from_project(project_id_param UUID)
     RETURNS TABLE (
                       task_id            UUID,
+                      task_key           VARCHAR,
                       task_name          VARCHAR,
                       task_description   TEXT,
                       task_status        VARCHAR,
@@ -247,6 +249,7 @@ CREATE OR REPLACE FUNCTION get_all_tasks_from_project(project_id_param UUID)
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
+               t.task_key      AS task_key,
                t.name          AS task_name,
                t.description   AS task_description,
                t.status        AS task_status,
@@ -264,6 +267,7 @@ DROP FUNCTION IF EXISTS get_all_tasks_from_user(UUID, VARCHAR);
 CREATE OR REPLACE FUNCTION get_all_tasks_from_user(user_id_param UUID, user_email_param VARCHAR)
     RETURNS TABLE (
                       task_id            UUID,
+                      task_key           VARCHAR,
                       task_name          VARCHAR,
                       task_description   TEXT,
                       task_status        VARCHAR,
@@ -277,6 +281,7 @@ CREATE OR REPLACE FUNCTION get_all_tasks_from_user(user_id_param UUID, user_emai
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
+               t.task_key      AS task_key,
                t.name          AS task_name,
                t.description   AS task_description,
                t.status        AS task_status,
@@ -299,6 +304,7 @@ DROP FUNCTION IF EXISTS get_all_tasks_from_user_and_project(UUID, UUID);
 CREATE OR REPLACE FUNCTION get_all_tasks_from_user_and_project(user_id_param UUID, project_id_param UUID)
     RETURNS TABLE (
                       task_id            UUID,
+                      task_key           VARCHAR,
                       task_name          VARCHAR,
                       task_description   TEXT,
                       task_status        VARCHAR,
@@ -310,6 +316,7 @@ CREATE OR REPLACE FUNCTION get_all_tasks_from_user_and_project(user_id_param UUI
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
+               t.task_key      AS task_key,
                t.name          AS task_name,
                t.description   AS task_description,
                t.status        AS task_status,
@@ -328,6 +335,7 @@ DROP FUNCTION IF EXISTS get_task_details(UUID);
 CREATE OR REPLACE FUNCTION get_task_details(task_id_param UUID)
     RETURNS TABLE (
                       task_id            UUID,
+                      task_key           VARCHAR,
                       task_name          VARCHAR,
                       task_description   TEXT,
                       task_status        VARCHAR,
@@ -343,6 +351,7 @@ CREATE OR REPLACE FUNCTION get_task_details(task_id_param UUID)
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
+               t.task_key      AS task_key,
                t.name          AS task_name,
                t.description   AS task_description,
                t.status        AS task_status,

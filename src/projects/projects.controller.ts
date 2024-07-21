@@ -42,6 +42,11 @@ export class ProjectsController {
     return this.projectsService.removeMember(addMemberDto);
   }
 
+  @Post('members/check/')
+  checkMember(@Body() addMemberDto: AddMemberDto) {
+    return this.projectsService.checkMember(addMemberDto);
+  }
+
   @Get('tasks/:projectId')
   getProjetTasks(@Param('projectId') projectId: string) {
     return this.projectsService.getProjetTasks(projectId);
