@@ -249,10 +249,36 @@ CREATE OR REPLACE FUNCTION get_all_tasks_from_project(project_id_param UUID)
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
-               t.task_key      AS task_key,
-               t.name          AS task_name,
-               t.description   AS task_description,
-               t.status        AS task_status,
+               t.task_key::VARCHAR      AS task_key,
+               t.name::VARCHAR          AS task_name,
+               t.description::TEXT      AS task_description,
+               t.status::VARCHAR        AS task_status,
+               t.creation_date AS task_creation_date,
+               t.deadline      AS task_deadline,
+               t.priority      AS task_priority,
+               t.assignment    AS task_assignment
+        FROM tasks t
+        WHERE t.project_id = project_id_param;
+END;
+$$ LANGUAGE plpgsql;CREATE OR REPLACE FUNCTION get_all_tasks_from_project(project_id_param UUID)
+    RETURNS TABLE (
+                      task_id            UUID,
+                      task_key           VARCHAR,
+                      task_name          VARCHAR,
+                      task_description   TEXT,
+                      task_status        VARCHAR,
+                      task_creation_date DATE,
+                      task_deadline      DATE,
+                      task_priority      INTEGER,
+                      task_assignment    UUID
+                  ) AS $$
+BEGIN
+    RETURN QUERY
+        SELECT t.task_id       AS task_id,
+               t.task_key::VARCHAR      AS task_key,
+               t.name::VARCHAR          AS task_name,
+               t.description::TEXT      AS task_description,
+               t.status::VARCHAR        AS task_status,
                t.creation_date AS task_creation_date,
                t.deadline      AS task_deadline,
                t.priority      AS task_priority,
