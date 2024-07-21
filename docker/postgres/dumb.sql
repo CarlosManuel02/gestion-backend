@@ -45,6 +45,7 @@ CREATE TABLE projects (
                           start_date  DATE                            NOT NULL,
                           end_date    DATE,
                           status      VARCHAR(50)                     NOT NULL CHECK ( status IN ('active', 'inactive', 'completed') ),
+                          visibility  BOOLEAN                         NOT NULL DEFAULT TRUE,
                           project_key VARCHAR(50)
 );
 
@@ -53,6 +54,7 @@ CREATE TABLE project_members (
                                  id         UUID NOT NULL PRIMARY KEY,
                                  project_id UUID REFERENCES projects (id),
                                  user_id    UUID REFERENCES Users (id),
+                                 join_date  DATE                            NOT NULL,
                                  role       VARCHAR(50)                     NOT NULL
 );
 
@@ -70,6 +72,7 @@ CREATE TABLE project_repositories (
 -- Tasks Table
 CREATE TABLE tasks (
                        task_id       UUID NOT NULL PRIMARY KEY,
+                       task_key      VARCHAR(10)                     NOT NULL,
                        name          VARCHAR(255)                    NOT NULL,
                        description   TEXT,
                        status        VARCHAR(50)                     NOT NULL,
@@ -105,6 +108,8 @@ CREATE TABLE task_comments (
 -- Functions
 -- ===============================
 
+-- Function to get user details
+DROP FUNCTION IF EXISTS get_user_details(UUID, VARCHAR);
 CREATE OR REPLACE FUNCTION get_user_details(user_id_param UUID, user_email_param VARCHAR)
     RETURNS TABLE (
                       user_id   UUID,
@@ -124,6 +129,7 @@ $$ LANGUAGE plpgsql;
 
 
 -- Function to get project details
+DROP FUNCTION IF EXISTS get_project_details(UUID, VARCHAR);
 CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_name_param VARCHAR)
     RETURNS TABLE (
                       project_id          UUID,
@@ -136,6 +142,7 @@ CREATE OR REPLACE FUNCTION get_project_details(project_id_param UUID, project_na
                       project_start_date  DATE,
                       project_end_date    DATE,
                       project_status      VARCHAR,
+                      project_visibility  BOOLEAN,
                       project_repository  TEXT,
                       members             JSONB
                   ) AS $$
@@ -151,13 +158,15 @@ BEGIN
                p.start_date  AS project_start_date,
                p.end_date    AS project_end_date,
                p.status      AS project_status,
+               p.visibility  AS project_visibility,
                pr.url        AS project_repository,
                (SELECT jsonb_agg(
                                jsonb_build_object(
                                        'member_id', mu.id,
                                        'member_username', mu.username,
                                        'member_email', mu.email,
-                                       'member_role', pm.role
+                                       'member_role', pm.role,
+                                       'join_date', pm.join_date
                                )
                        )
                 FROM project_members pm
@@ -174,6 +183,7 @@ $$ LANGUAGE plpgsql;
 
 
 -- Function to get all projects from a user
+DROP FUNCTION IF EXISTS get_all_projects_from_user(UUID);
 CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
     RETURNS TABLE (
                       project_id          UUID,
@@ -186,6 +196,7 @@ CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
                       project_start_date  DATE,
                       project_end_date    DATE,
                       project_status      VARCHAR,
+                      project_visibility  BOOLEAN,
                       project_repository  TEXT,
                       members             JSONB
                   ) AS $$
@@ -201,13 +212,15 @@ BEGIN
                p.start_date  AS project_start_date,
                p.end_date    AS project_end_date,
                p.status      AS project_status,
+               p.visibility  AS project_visibility,
                pr.url        AS project_repository,
                jsonb_agg(
                        jsonb_build_object(
                                'member_id', u.id,
                                'member_username', u.username,
                                'member_email', u.email,
-                               'member_role', pm.role
+                               'member_role', pm.role,
+                               'join_date', pm.join_date
                        )
                ) AS members
         FROM projects p
@@ -220,9 +233,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all tasks from a project
+DROP FUNCTION IF EXISTS get_all_tasks_from_project(UUID);
 CREATE OR REPLACE FUNCTION get_all_tasks_from_project(project_id_param UUID)
     RETURNS TABLE (
                       task_id            UUID,
+                      task_key           VARCHAR,
                       task_name          VARCHAR,
                       task_description   TEXT,
                       task_status        VARCHAR,
@@ -234,6 +249,7 @@ CREATE OR REPLACE FUNCTION get_all_tasks_from_project(project_id_param UUID)
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
+               t.task_key      AS task_key,
                t.name          AS task_name,
                t.description   AS task_description,
                t.status        AS task_status,
@@ -247,9 +263,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all tasks from a user
+DROP FUNCTION IF EXISTS get_all_tasks_from_user(UUID, VARCHAR);
 CREATE OR REPLACE FUNCTION get_all_tasks_from_user(user_id_param UUID, user_email_param VARCHAR)
     RETURNS TABLE (
                       task_id            UUID,
+                      task_key           VARCHAR,
                       task_name          VARCHAR,
                       task_description   TEXT,
                       task_status        VARCHAR,
@@ -263,6 +281,7 @@ CREATE OR REPLACE FUNCTION get_all_tasks_from_user(user_id_param UUID, user_emai
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
+               t.task_key      AS task_key,
                t.name          AS task_name,
                t.description   AS task_description,
                t.status        AS task_status,
@@ -281,9 +300,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all tasks from a user and project
+DROP FUNCTION IF EXISTS get_all_tasks_from_user_and_project(UUID, UUID);
 CREATE OR REPLACE FUNCTION get_all_tasks_from_user_and_project(user_id_param UUID, project_id_param UUID)
     RETURNS TABLE (
                       task_id            UUID,
+                      task_key           VARCHAR,
                       task_name          VARCHAR,
                       task_description   TEXT,
                       task_status        VARCHAR,
@@ -295,6 +316,7 @@ CREATE OR REPLACE FUNCTION get_all_tasks_from_user_and_project(user_id_param UUI
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
+               t.task_key      AS task_key,
                t.name          AS task_name,
                t.description   AS task_description,
                t.status        AS task_status,
@@ -309,9 +331,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get task details
+DROP FUNCTION IF EXISTS get_task_details(UUID);
 CREATE OR REPLACE FUNCTION get_task_details(task_id_param UUID)
     RETURNS TABLE (
                       task_id            UUID,
+                      task_key           VARCHAR,
                       task_name          VARCHAR,
                       task_description   TEXT,
                       task_status        VARCHAR,
@@ -327,6 +351,7 @@ CREATE OR REPLACE FUNCTION get_task_details(task_id_param UUID)
 BEGIN
     RETURN QUERY
         SELECT t.task_id       AS task_id,
+               t.task_key      AS task_key,
                t.name          AS task_name,
                t.description   AS task_description,
                t.status        AS task_status,
@@ -346,6 +371,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all attachments from a task
+DROP FUNCTION IF EXISTS get_all_attachments_from_task(UUID);
 CREATE OR REPLACE FUNCTION get_all_attachments_from_task(task_id_param UUID)
     RETURNS TABLE (
                       attachment_id UUID,
@@ -367,6 +393,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all comments from a task
+DROP FUNCTION IF EXISTS get_all_comments_from_task(UUID);
 CREATE OR REPLACE FUNCTION get_all_comments_from_task(task_id_param UUID)
     RETURNS TABLE (
                       comment_id UUID,
@@ -393,6 +420,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all notifications from a user
+DROP FUNCTION IF EXISTS get_all_notifications_from_user(UUID);
 CREATE OR REPLACE FUNCTION get_all_notifications_from_user(user_id_param UUID)
     RETURNS TABLE (
                       notification_id UUID,
@@ -423,19 +451,22 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all project's members
+DROP FUNCTION IF EXISTS get_all_project_members(UUID);
 CREATE OR REPLACE FUNCTION get_all_project_members(project_id_param UUID)
     RETURNS TABLE (
                       member_id   UUID,
                       member_name VARCHAR,
                       member_email VARCHAR,
-                      member_role VARCHAR
+                      member_role VARCHAR,
+                      join_date   DATE
                   ) AS $$
 BEGIN
     RETURN QUERY
         SELECT u.id       AS member_id,
                u.username AS member_name,
                u.email    AS member_email,
-               pm.role     AS member_role
+               pm.role     AS member_role,
+               pm.join_date AS join_date
         FROM project_members pm
                  JOIN Users u ON pm.user_id = u.id
         WHERE pm.project_id = project_id_param;
@@ -443,6 +474,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get all comments from a task
+DROP FUNCTION IF EXISTS get_all_commets_from_user(UUID);
 CREATE OR REPLACE FUNCTION get_all_commets_from_user(task_id_param UUID)
     RETURNS TABLE (
                      id         UUID,
@@ -464,5 +496,54 @@ BEGIN
                  JOIN Users u ON tc.user_id = u.id
         WHERE tc.task_id = task_id_param
         ORDER BY tc.created_at DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to get all public projects
+DROP FUNCTION IF EXISTS get_all_public_projects();
+CREATE OR REPLACE FUNCTION get_all_public_projects()
+    RETURNS TABLE (
+                      project_id          UUID,
+                      project_name        VARCHAR,
+                      project_key         VARCHAR,
+                      project_owner_id    UUID,
+                      project_owner_name  VARCHAR,
+                      project_owner_email VARCHAR,
+                      project_description TEXT,
+                      project_start_date  DATE,
+                      project_end_date    DATE,
+                      project_status      VARCHAR,
+                      project_visibility  BOOLEAN,
+                      project_repository  TEXT,
+                      members             JSONB
+                  ) AS $$
+BEGIN
+    RETURN QUERY
+        SELECT p.id          AS project_id,
+               p.name        AS project_name,
+               p.project_key AS project_key,
+               p.owner       AS project_owner_id,
+               u.username    AS project_owner_name,
+               u.email       AS project_owner_email,
+               p.description AS project_description,
+               p.start_date  AS project_start_date,
+               p.end_date    AS project_end_date,
+               p.status      AS project_status,
+               p.visibility  AS project_visibility,
+               pr.url        AS project_repository,
+               jsonb_agg(
+                       jsonb_build_object(
+                               'member_id', u.id,
+                               'member_username', u.username,
+                               'member_email', u.email,
+                               'member_role', pm.role
+                       )
+               ) AS members
+        FROM projects p
+                 JOIN Users u ON p.owner = u.id
+                 LEFT JOIN project_repositories pr ON p.id = pr.project_id
+                 LEFT JOIN project_members pm ON p.id = pm.project_id
+        WHERE p.visibility = TRUE
+        GROUP BY p.id, u.username, u.email, pr.url;
 END;
 $$ LANGUAGE plpgsql;

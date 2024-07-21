@@ -30,8 +30,13 @@ export class ProjectsService {
   async create(createProjectDto: CreateProjectDto) {
     console.log(createProjectDto);
     // from String[] to json[]
-    createProjectDto.members = JSON.parse(createProjectDto.members.toString());
-
+    if (createProjectDto.members) {
+      createProjectDto.members = JSON.parse(
+        createProjectDto.members.toString(),
+      );
+    } else {
+      createProjectDto.members = [];
+    }
     createProjectDto.id = uuidv4();
     createProjectDto.start_date = new Date();
     createProjectDto.end_date = new Date();
@@ -46,6 +51,7 @@ export class ProjectsService {
       owner: createProjectDto.owner,
       project_key: createProjectDto.project_key,
       status: 'active',
+      visibility: createProjectDto.visibility,
     });
     try {
       await this.projectRepository.save(project).then(async () => {
@@ -181,6 +187,7 @@ export class ProjectsService {
       project_id: project_id,
       user_id: member.id,
       role: member.role,
+      join_date: Date.now().toLocaleString(),
     });
     try {
       await this.projectMenbersRepository.save(projectMember).then((res) => {
@@ -277,10 +284,44 @@ export class ProjectsService {
         project_id: addMemberDto.project_id,
       });
       return {
+        status: 200,
         message: `Member with id ${addMemberDto.id} removed from project with id ${addMemberDto.project_id}`,
       };
     } catch (error) {
       return error;
     }
+  }
+
+  async getPublicProjects() {
+    let projects: Project[];
+
+    try {
+      projects = await this.projectRepository.query(`SELECT *
+                                                     FROM get_all_public_projects()`);
+    } catch (error) {
+      throw new NotFoundException('No public projects found');
+    }
+
+    return {
+      status: 200,
+      data: projects,
+    };
+  }
+
+  async checkMember(addMemberDto: AddMemberDto) {
+    const member = this.projectMenbersRepository.findOne({
+      where: { user_id: addMemberDto.id, project_id: addMemberDto.project_id },
+    });
+    if (!member) {
+      return {
+        status: 404,
+        message: `Member with id ${addMemberDto.id} not found in project with id ${addMemberDto.project_id}`,
+      };
+    }
+
+    return {
+      status: 200,
+      message: 'Member found in project',
+    };
   }
 }

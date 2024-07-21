@@ -17,6 +17,8 @@ export class Project {
   @Column({ type: 'uuid', nullable: false })
   owner: string;
 
+  @Column({ type: 'boolean', nullable: false })
+  visibility: boolean;
 
   @Column({ type: 'text', nullable: true })
   description: string;

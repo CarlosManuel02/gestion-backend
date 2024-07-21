@@ -3,7 +3,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsDateString,
-  IsArray,
+  IsArray, IsBoolean,
 } from 'class-validator';
 
 export class CreateProjectDto {
@@ -37,12 +37,12 @@ export class CreateProjectDto {
   // status: string;
 
   // @IsArray()
-  @IsNotEmpty()
+  @IsOptional()
   members: any[];
 
-  // @IsString()
-  // @IsNotEmpty()
-  // owner: string;
+  @IsBoolean()
+  @IsNotEmpty()
+  visibility: boolean;
 
   @IsString()
   @IsNotEmpty()

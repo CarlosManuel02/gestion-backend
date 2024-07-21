@@ -9,6 +9,9 @@ export class Task {
   @PrimaryGeneratedColumn('uuid')
   task_id: string;
 
+  @Column({ type: 'varchar', length: 10, nullable: false })
+  task_key: string;
+
   @Column({ type: 'varchar', length: 255, nullable: false })
   name: string;
 
