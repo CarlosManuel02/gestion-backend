@@ -187,18 +187,20 @@ export class ProjectsService {
       project_id: project_id,
       user_id: member.id,
       role: member.role,
-      join_date: Date.now().toLocaleString(),
+      join_date: new Date(),
     });
     try {
       await this.projectMenbersRepository.save(projectMember).then((res) => {
         return {
           message: `User with id ${member.id} added to project with id ${project_id}`,
           res,
+          status: 200,
         };
       });
 
       return {
         message: `User with id ${member.id} added to project with id ${project_id}`,
+        status: 200,
         projectMember,
       };
     } catch (error) {
@@ -323,5 +325,31 @@ export class ProjectsService {
       status: 200,
       message: 'Member found in project',
     };
+  }
+
+  async updateMember(addMemberDto: AddMemberDto) {
+    const member = this.projectMenbersRepository.findOne({
+      where: { user_id: addMemberDto.id, project_id: addMemberDto.project_id },
+    });
+
+    if (!member) {
+      return {
+        status: 404,
+        message: `Member with id ${addMemberDto.id} not found in project with id ${addMemberDto.project_id}`,
+      };
+    }
+
+    try {
+      await this.projectMenbersRepository.update(
+        { user_id: addMemberDto.id, project_id: addMemberDto.project_id },
+        { role: addMemberDto.role },
+      );
+      return {
+        status: 200,
+        message: `Member with id ${addMemberDto.id} updated in project with id ${addMemberDto.project_id}`,
+      };
+    } catch (error) {
+      return error;
+    }
   }
 }

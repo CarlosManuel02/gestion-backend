@@ -32,6 +32,11 @@ export class ProjectsController {
     return this.projectsService.getProjectMembers(projectId);
   }
 
+  @Patch('members/updateMember')
+  updateMember(@Body() addMemberDto: AddMemberDto) {
+    return this.projectsService.updateMember(addMemberDto);
+  }
+
   @Get('public')
   getPublicProjects() {
     return this.projectsService.getPublicProjects();
