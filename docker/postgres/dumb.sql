@@ -1,4 +1,25 @@
 -- ===============================
+-- Database: task_manager
+-- ===============================
+
+DROP TABLE IF EXISTS Users CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS Logs CASCADE;
+DROP TABLE IF EXISTS projects CASCADE;
+DROP TABLE IF EXISTS project_members CASCADE;
+DROP TABLE IF EXISTS project_repositories CASCADE;
+DROP TABLE IF EXISTS project_invitations CASCADE;
+DROP TABLE IF EXISTS roles CASCADE;
+DROP TABLE IF EXISTS project_settings CASCADE;
+DROP TABLE IF EXISTS role_permissions CASCADE;
+DROP TABLE IF EXISTS tasks CASCADE;
+DROP TABLE IF EXISTS Attachments CASCADE;
+DROP TABLE IF EXISTS task_comments CASCADE;
+
+
+
+
+-- ===============================
 -- User Management Tables
 -- ===============================
 
