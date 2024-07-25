@@ -160,7 +160,8 @@ export class AuthService {
     if (user && (await user.validatePassword(password))) {
       const token = await this.generateJWT(user);
       await this.authRepository.save(user).then(async (user) => {
-        await this.logService.create(user.id, 'User logged in');
+        const log = await this.logService.create(user.id, 'User logged in');
+        console.log('Log created', log);
       });
       return {
         user: {
