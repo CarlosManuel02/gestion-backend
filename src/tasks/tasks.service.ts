@@ -33,8 +33,13 @@ export class TasksService {
     createTaskDto.creation_date = new Date().toISOString();
     createTaskDto.assignment = user.id;
     createTaskDto.task_id = uuidv4();
+    createTaskDto.status = 'open';
     const task = this.taskRepository.create(createTaskDto);
-    return this.taskRepository.save(task);
+    await this.taskRepository.save(task);
+    return {
+      status: 201,
+      task,
+    };
   }
 
   async findAllFromUser(term: string) {

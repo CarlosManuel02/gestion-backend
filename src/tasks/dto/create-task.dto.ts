@@ -4,7 +4,8 @@ import {
   IsOptional,
   IsDateString,
   IsInt,
-  IsUUID, IsEmail,
+  IsUUID,
+  IsEmail,
 } from 'class-validator';
 
 export class CreateTaskDto {
@@ -25,14 +26,14 @@ export class CreateTaskDto {
   description?: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   status: string;
 
   @IsDateString()
-  @IsNotEmpty()
+  @IsOptional()
   creation_date: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsDateString()
   deadline?: string;
 
