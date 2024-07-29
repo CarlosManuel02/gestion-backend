@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskDto } from './dto/update-task.dto';
-import { Task } from './entities/task.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { AuthService } from '../auth/auth.service';
-import { ProjectsService } from '../projects/projects.service';
-import { v4 as uuidv4, validate as isUUID } from 'uuid';
+import {Injectable} from '@nestjs/common';
+import {CreateTaskDto} from './dto/create-task.dto';
+import {UpdateTaskDto} from './dto/update-task.dto';
+import {Task} from './entities/task.entity';
+import {Repository} from 'typeorm';
+import {InjectRepository} from '@nestjs/typeorm';
+import {AuthService} from '../auth/auth.service';
+import {ProjectsService} from '../projects/projects.service';
+import {v4 as uuidv4, validate as isUUID} from 'uuid';
 
 @Injectable()
 export class TasksService {
@@ -15,10 +15,11 @@ export class TasksService {
     private taskRepository: Repository<Task>,
     private projectService: ProjectsService,
     private authService: AuthService,
-  ) {}
+  ) {
+  }
 
   async create(createTaskDto: CreateTaskDto) {
-    const { user } = await this.authService.findBy(createTaskDto.assignment);
+    const {user} = await this.authService.findBy(createTaskDto.assignment);
     if (!user) {
       return {
         message: 'The user does not exist',
@@ -30,16 +31,26 @@ export class TasksService {
         message: 'The project does not exist',
       };
     }
-    createTaskDto.creation_date = new Date().toISOString();
-    createTaskDto.assignment = user.id;
-    createTaskDto.task_id = uuidv4();
-    createTaskDto.status = 'open';
-    const task = this.taskRepository.create(createTaskDto);
-    await this.taskRepository.save(task);
-    return {
-      status: 201,
-      task,
-    };
+    try {
+      createTaskDto.creation_date = new Date().toISOString();
+      createTaskDto.assignment = user.id;
+      createTaskDto.task_id = uuidv4();
+      createTaskDto.status = 'open';
+      const task = this.taskRepository.create(createTaskDto);
+      await this.taskRepository.save(task);
+
+      return {
+        status: 201,
+        task,
+        message: 'Task created',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        error,
+        message: 'Error creating task',
+      };
+    }
   }
 
   async findAllFromUser(term: string) {
@@ -92,7 +103,7 @@ export class TasksService {
 
   async update(id: string, updateTaskDto: UpdateTaskDto) {
     let task = await this.taskRepository.findOne({
-      where: { task_id: id },
+      where: {task_id: id},
     });
     if (!task.task_id) {
       return {
@@ -106,7 +117,7 @@ export class TasksService {
         task_id: id,
         ...updateTaskDto,
       });
-      const { user } = await this.authService.findBy(task.assignment);
+      const {user} = await this.authService.findBy(task.assignment);
       task.assignment = user.id;
       await this.taskRepository.save(task);
       return {
@@ -124,7 +135,7 @@ export class TasksService {
 
   async remove(id: string) {
     const task = await this.taskRepository.findOne({
-      where: { task_id: id },
+      where: {task_id: id},
     });
     if (!task) {
       return {
