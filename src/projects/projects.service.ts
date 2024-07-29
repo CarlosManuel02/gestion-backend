@@ -63,7 +63,11 @@ export class ProjectsService {
         await this.validateUser(createProjectDto, project);
       });
     } catch (error) {
-      return error;
+      return {
+        status: 500,
+        message: 'An error occured',
+        error,
+      };
     }
     return {
       status: 200,
