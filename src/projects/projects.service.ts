@@ -1,17 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { Project } from './entities/project.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import {Injectable, NotFoundException} from '@nestjs/common';
+import {CreateProjectDto} from './dto/create-project.dto';
+import {UpdateProjectDto} from './dto/update-project.dto';
+import {Project} from './entities/project.entity';
+import {Repository} from 'typeorm';
+import {InjectRepository} from '@nestjs/typeorm';
 
-import { v4 as uuidv4 } from 'uuid';
-import { ProjectMenbers } from './entities/projectMenbers.entity';
-import { isUUID } from 'class-validator';
-import { AddMemberDto } from './dto/add-member.dto';
-import { AuthService } from '../auth/auth.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { ProjectRepo } from './entities/projectRepo.entity';
+import {v4 as uuidv4} from 'uuid';
+import {ProjectMenbers} from './entities/projectMenbers.entity';
+import {isUUID} from 'class-validator';
+import {AddMemberDto} from './dto/add-member.dto';
+import {AuthService} from '../auth/auth.service';
+import {NotificationsService} from '../notifications/notifications.service';
+import {ProjectRepo} from './entities/projectRepo.entity';
 
 @Injectable()
 export class ProjectsService {
@@ -25,7 +25,8 @@ export class ProjectsService {
     private projectRepoRepository: Repository<ProjectRepo>,
     private auth: AuthService,
     private notificationService: NotificationsService,
-  ) {}
+  ) {
+  }
 
   async create(createProjectDto: CreateProjectDto) {
     console.log(createProjectDto);
@@ -40,7 +41,7 @@ export class ProjectsService {
     createProjectDto.id = uuidv4();
     createProjectDto.start_date = new Date();
     createProjectDto.end_date = new Date();
-    const { admins, members } = await this.getAdmins(createProjectDto);
+    const {admins, members} = await this.getAdmins(createProjectDto);
     createProjectDto.members = [...admins, ...members];
     const project = this.projectRepository.create({
       id: createProjectDto.id,
@@ -178,7 +179,7 @@ export class ProjectsService {
     member: { id: string; role: string },
   ) {
     const memberExists = await this.projectMenbersRepository.findOne({
-      where: { project_id: project_id, user_id: member.id },
+      where: {project_id: project_id, user_id: member.id},
     });
     if (memberExists) {
       return {
@@ -242,12 +243,12 @@ export class ProjectsService {
         }
       }
     }
-    return { admins, members };
+    return {admins, members};
   }
 
   async getProjectMembers(projectId: string) {
     const project = await this.projectMenbersRepository.find({
-      where: { project_id: projectId },
+      where: {project_id: projectId},
     });
     if (!project) {
       return {
@@ -269,14 +270,15 @@ export class ProjectsService {
 
   getProjetTasks(projectId: string) {
     const tasks = this.projectRepository.query(
-      `SELECT * FROM get_all_tasks_from_project('${projectId}')`,
+      `SELECT *
+       FROM get_all_tasks_from_project('${projectId}')`,
     );
     return tasks;
   }
 
   async removeMember(addMemberDto: AddMemberDto) {
     const member = this.projectMenbersRepository.findOne({
-      where: { user_id: addMemberDto.id, project_id: addMemberDto.project_id },
+      where: {user_id: addMemberDto.id, project_id: addMemberDto.project_id},
     });
     if (!member) {
       return {
@@ -316,7 +318,7 @@ export class ProjectsService {
 
   async checkMember(addMemberDto: AddMemberDto) {
     const member = this.projectMenbersRepository.findOne({
-      where: { user_id: addMemberDto.id, project_id: addMemberDto.project_id },
+      where: {user_id: addMemberDto.id, project_id: addMemberDto.project_id},
     });
     if (!member) {
       return {
@@ -333,7 +335,7 @@ export class ProjectsService {
 
   async updateMember(addMemberDto: AddMemberDto) {
     const member = this.projectMenbersRepository.findOne({
-      where: { user_id: addMemberDto.id, project_id: addMemberDto.project_id },
+      where: {user_id: addMemberDto.id, project_id: addMemberDto.project_id},
     });
 
     if (!member) {
@@ -345,8 +347,8 @@ export class ProjectsService {
 
     try {
       await this.projectMenbersRepository.update(
-        { user_id: addMemberDto.id, project_id: addMemberDto.project_id },
-        { role: addMemberDto.role },
+        {user_id: addMemberDto.id, project_id: addMemberDto.project_id},
+        {role: addMemberDto.role},
       );
       return {
         status: 200,
@@ -354,6 +356,33 @@ export class ProjectsService {
       };
     } catch (error) {
       return error;
+    }
+  }
+
+  async getProjectSettings(id: string) {
+    const project = await this.projectRepository.findOne({
+      where: { id },
+    });
+    if (!project) {
+      return {
+        status: 404,
+        message: `Project with id ${id} not found`,
+      };
+    }
+
+    try {
+      const settings = await this.projectRepository.query(`SELECT *
+                                                           FROM get_project_settings('${id}')`);
+      return {
+        status: 200,
+        data: settings,
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        error,
+      };
+
     }
   }
 }

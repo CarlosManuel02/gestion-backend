@@ -76,4 +76,9 @@ export class ProjectsController {
   remove(@Param('id') id: string) {
     return this.projectsService.remove(+id);
   }
+
+  @Get(':id/settings')
+  getProjectSettings(@Param('id') id: string) {
+    return this.projectsService.getProjectSettings(id);
+  }
 }
