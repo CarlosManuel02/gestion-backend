@@ -259,6 +259,27 @@ END
 $$ LANGUAGE plpgsql;
 
 
+-- Function to DELETE a project and all its dependencies (tasks, comments, attachments, members, settings, repository,etc)
+DROP FUNCTION IF EXISTS delete_project(UUID);
+CREATE OR REPLACE FUNCTION delete_project(project_id_param UUID)
+    RETURNS boolean
+AS
+$$
+DECLARE
+    project_name VARCHAR;
+BEGIN
+    SELECT name INTO project_name FROM projects WHERE id = project_id_param;
+    DELETE FROM tasks WHERE project_id = project_id_param;
+    DELETE FROM task_comments WHERE task_id IN (SELECT task_id FROM tasks WHERE project_id = project_id_param);
+    DELETE FROM Attachments WHERE task_id IN (SELECT task_id FROM tasks WHERE project_id = project_id_param);
+    DELETE FROM project_members WHERE project_id = project_id_param;
+    DELETE FROM project_settings WHERE project_id = project_id_param;
+    DELETE FROM project_repositories WHERE project_id = project_id_param;
+    DELETE FROM project_invitations WHERE project_id = project_id_param;
+    DELETE FROM projects WHERE id = project_id_param;
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
 
 -- Function to get project details
     DROP FUNCTION IF EXISTS get_project_details(UUID, VARCHAR);
