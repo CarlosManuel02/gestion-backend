@@ -161,30 +161,6 @@ CREATE TABLE task_comments
     created_at TIMESTAMP
 );
 
--- ===============================
--- Triggers
--- ===============================
-
--- Trigger to create the permission for a project
-CREATE OR REPLACE TRIGGER create_project_permission
-    AFTER INSERT
-    ON projects
-    FOR EACH ROW
-EXECUTE FUNCTION create_project_permission();
-END;
-
-
--- ===============================
--- Insert Default Data
--- ===============================
-
--- Insert Default Roles
-INSERT INTO roles (id, name)
-VALUES (gen_random_uuid(), 'Owner'),
-       (gen_random_uuid(), 'Admin'),
-       (gen_random_uuid(), 'Member');
-
-
 
 -- ===============================
 -- Functions
@@ -766,3 +742,29 @@ WHERE p.visibility = TRUE
 GROUP BY p.id, u.username, u.email, pr.url;
 END;
 $$ LANGUAGE plpgsql;
+
+
+-- ===============================
+-- Triggers
+-- ===============================
+
+-- Trigger to create the permission for a project
+CREATE OR REPLACE TRIGGER create_project_permission
+    AFTER INSERT
+    ON projects
+    FOR EACH ROW
+EXECUTE FUNCTION create_project_permission();
+END;
+
+
+-- ===============================
+-- Insert Default Data
+-- ===============================
+
+-- Insert Default Roles
+INSERT INTO roles (id, name)
+VALUES (gen_random_uuid(), 'Owner'),
+       (gen_random_uuid(), 'Admin'),
+       (gen_random_uuid(), 'Member');
+
+
