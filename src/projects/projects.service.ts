@@ -169,8 +169,25 @@ export class ProjectsService {
     return `This action updates a #${id} project`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} project`;
+  async remove(id: string) {
+    const project = await this.projectRepository.findOne({ where: { id } });
+    if (!project) {
+      return {
+        message: `Project with id ${id} not found`,
+      };
+    }
+
+    try {
+      const result = await this.projectRepository.query(
+        `SELECT * FROM delete_project('${id}')`,
+      );
+      return {
+        status: 200,
+        result,
+      };
+    } catch (error) {
+      return error;
+    }
   }
 
   async addMemberToProject(
@@ -269,7 +286,8 @@ export class ProjectsService {
 
   getProjetTasks(projectId: string) {
     const tasks = this.projectRepository.query(
-      `SELECT * FROM get_all_tasks_from_project('${projectId}')`,
+      `SELECT *
+       FROM get_all_tasks_from_project('${projectId}')`,
     );
     return tasks;
   }
@@ -354,6 +372,32 @@ export class ProjectsService {
       };
     } catch (error) {
       return error;
+    }
+  }
+
+  async getProjectSettings(id: string) {
+    const project = await this.projectRepository.findOne({
+      where: { id },
+    });
+    if (!project) {
+      return {
+        status: 404,
+        message: `Project with id ${id} not found`,
+      };
+    }
+
+    try {
+      const settings = await this.projectRepository.query(`SELECT *
+                                                           FROM get_project_settings('${id}')`);
+      return {
+        status: 200,
+        data: settings,
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        error,
+      };
     }
   }
 }

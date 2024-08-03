@@ -72,8 +72,13 @@ export class ProjectsController {
     return this.projectsService.update(+id, updateProjectDto);
   }
 
-  @Delete(':id')
+  @Delete('delete/:id')
   remove(@Param('id') id: string) {
-    return this.projectsService.remove(+id);
+    return this.projectsService.remove(id);
+  }
+
+  @Get(':id/settings')
+  getProjectSettings(@Param('id') id: string) {
+    return this.projectsService.getProjectSettings(id);
   }
 }
