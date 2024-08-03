@@ -12,6 +12,7 @@ import { AddMemberDto } from './dto/add-member.dto';
 import { AuthService } from '../auth/auth.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ProjectRepo } from './entities/projectRepo.entity';
+import { SettingsDto } from './dto/settings.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -392,6 +393,41 @@ export class ProjectsService {
       return {
         status: 200,
         data: settings,
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        error,
+      };
+    }
+  }
+
+  async updateProjectSettings(id: string, updateProjectDto: SettingsDto) {
+    const project = await this.projectRepository.findOne({
+      where: { id },
+    });
+    if (!project) {
+      return {
+        status: 404,
+        message: `Project with id ${id} not found`,
+      };
+    }
+
+    try {
+      const permissions = updateProjectDto.permissions.map((permission) => {
+        return {
+          permission: permission.permission,
+          value: permission.value,
+        };
+      });
+      console.log(permissions);
+      await this.projectRepository.query(
+        `SELECT *
+         FROM update_project_settings('${id}', '${updateProjectDto.role_id}', '${JSON.stringify(permissions)}')`,
+      );
+      return {
+        status: 200,
+        message: `Project with id ${id} settings updated`,
       };
     } catch (error) {
       return {
