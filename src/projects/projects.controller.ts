@@ -11,6 +11,7 @@ import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { AddMemberDto } from './dto/add-member.dto';
+import { SettingsDto } from './dto/settings.dto';
 
 @Controller('projects')
 export class ProjectsController {
@@ -80,5 +81,13 @@ export class ProjectsController {
   @Get(':id/settings')
   getProjectSettings(@Param('id') id: string) {
     return this.projectsService.getProjectSettings(id);
+  }
+
+  @Patch(':id/settings')
+  updateProjectSettings(
+    @Param('id') id: string,
+    @Body() updateProjectDto: SettingsDto,
+  ) {
+    return this.projectsService.updateProjectSettings(id, updateProjectDto);
   }
 }

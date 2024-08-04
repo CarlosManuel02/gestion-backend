@@ -161,30 +161,6 @@ CREATE TABLE task_comments
     created_at TIMESTAMP
 );
 
--- ===============================
--- Triggers
--- ===============================
-
--- Trigger to create the permission for a project
-CREATE OR REPLACE TRIGGER create_project_permission
-    AFTER INSERT
-    ON projects
-    FOR EACH ROW
-EXECUTE FUNCTION create_project_permission();
-END;
-
-
--- ===============================
--- Insert Default Data
--- ===============================
-
--- Insert Default Roles
-INSERT INTO roles (id, name)
-VALUES (gen_random_uuid(), 'Owner'),
-       (gen_random_uuid(), 'Admin'),
-       (gen_random_uuid(), 'Member');
-
-
 
 -- ===============================
 -- Functions
@@ -240,21 +216,33 @@ AS
 $$
 BEGIN
     RETURN QUERY
-    SELECT ps.id                                  AS id,
-           ps.project_id                          AS project_id,
-           ps.role_id                             AS role_id,
-           r.name                                AS role_name,
-           jsonb_agg(
-               jsonb_build_object(
-                   'permission', permission_key,
-                   'value', ps.permissions -> permission_key
-               )
-           ) AS permissions
-    FROM project_settings ps
-    CROSS JOIN LATERAL jsonb_object_keys(ps.permissions) AS permission_key
-    JOIN roles r ON ps.role_id = r.id
-    WHERE ps.project_id = project_id_param
-    GROUP BY ps.id, ps.project_id, ps.role_id, r.name;
+    SELECT
+        ps.id AS id,
+        ps.project_id AS project_id,
+        ps.role_id AS role_id,
+        r.name AS role_name,
+        ps.permissions AS permissions
+    FROM
+        project_settings ps
+    JOIN
+        roles r ON ps.role_id = r.id
+    WHERE
+        ps.project_id = project_id_param;
+END
+$$ LANGUAGE plpgsql;
+
+
+-- Function to update the project settings
+DROP FUNCTION IF EXISTS update_project_settings(UUID, UUID, JSONB);
+CREATE OR REPLACE FUNCTION update_project_settings(project_id_param UUID, role_id_param UUID, permissions_param JSONB)
+    RETURNS BOOLEAN
+AS
+$$
+BEGIN
+    UPDATE project_settings
+    SET permissions = permissions_param
+    WHERE project_id = project_id_param AND role_id = role_id_param;
+    RETURN TRUE;
 END
 $$ LANGUAGE plpgsql;
 
@@ -766,3 +754,29 @@ WHERE p.visibility = TRUE
 GROUP BY p.id, u.username, u.email, pr.url;
 END;
 $$ LANGUAGE plpgsql;
+
+
+-- ===============================
+-- Triggers
+-- ===============================
+
+-- Trigger to create the permission for a project
+CREATE OR REPLACE TRIGGER create_project_permission
+    AFTER INSERT
+    ON projects
+    FOR EACH ROW
+EXECUTE FUNCTION create_project_permission();
+END;
+
+
+-- ===============================
+-- Insert Default Data
+-- ===============================
+
+-- Insert Default Roles
+INSERT INTO roles (id, name)
+VALUES (gen_random_uuid(), 'Owner'),
+       (gen_random_uuid(), 'Admin'),
+       (gen_random_uuid(), 'Member');
+
+
