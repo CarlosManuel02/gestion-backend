@@ -68,9 +68,9 @@ export class ProjectsController {
     return this.projectsService.findOne(term);
   }
 
-  @Patch(':id')
+  @Patch('update/:id')
   update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
-    return this.projectsService.update(+id, updateProjectDto);
+    return this.projectsService.update(id, updateProjectDto);
   }
 
   @Delete('delete/:id')
