@@ -51,4 +51,8 @@ export class CreateProjectDto {
   @IsString()
   @IsOptional()
   repository_url: string;
+
+  @IsOptional()
+  status: string;
+
 }

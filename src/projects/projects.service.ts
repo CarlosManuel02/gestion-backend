@@ -142,6 +142,31 @@ export class ProjectsService {
     }
   }
 
+  async updateProjectRepo(project_id: string, repo: string) {
+    const project = await this.projectRepository.findOne({ where: { id: project_id } });
+    if (!project) {
+      return {
+        message: `Project with id ${project_id} not found`,
+      };
+    }
+
+    try {
+      const projectRepo = this.projectRepoRepository.create({
+        id: uuidv4(),
+        project_id: project_id,
+        url: repo,
+      });
+      await this.projectRepoRepository.save(projectRepo).then((res) => {
+        return {
+          message: `Repo ${repo} added to project with id ${project_id}`,
+          res,
+        };
+      });
+    } catch (error) {
+      return error;
+    }
+  }
+
   async findOne(term: string) {
     let project: Project;
     try {
@@ -166,8 +191,42 @@ export class ProjectsService {
     };
   }
 
-  update(id: number, updateProjectDto: UpdateProjectDto) {
-    return `This action updates a #${id} project`;
+  async update(id: string, updateProjectDto: UpdateProjectDto) {
+    const project = await this.projectRepository.findOne({ where: { id } });
+    if (!project) {
+      return {
+        message: `Project with id ${id} not found`,
+      };
+    }
+
+    try {
+      const result = await this.projectRepository.update(id, {
+        name: updateProjectDto.name,
+        description: updateProjectDto.description,
+        start_date: updateProjectDto.start_date,
+        end_date: updateProjectDto.end_date,
+        status: updateProjectDto.status,
+        visibility: updateProjectDto.visibility,
+      });
+
+      if (updateProjectDto.repository_url) {
+        await this.updateProjectRepo(
+          project.id,
+          updateProjectDto.repository_url,
+        );
+      }
+      return {
+        status: 200,
+        message: `Project with id ${id} updated successfully`,
+        result,
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: 'An error occured',
+        error,
+      };
+    }
   }
 
   async remove(id: string) {
