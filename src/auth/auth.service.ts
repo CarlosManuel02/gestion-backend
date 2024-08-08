@@ -108,7 +108,7 @@ export class AuthService {
           .getOne();
       }
     } catch (e) {
-      throw new BadRequestException('No user found with the given term');
+      throw new BadRequestException(`Error while searching the user: ${e}`);
     }
     return {
       user,
@@ -173,6 +173,7 @@ export class AuthService {
           id: user.id,
           username: user.username,
           email: user.email,
+          created_at: user.created_at,
         },
         token,
         status: 200,
