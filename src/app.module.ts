@@ -13,6 +13,7 @@ import { AttachmentsModule } from './attachments/attachments.module';
 import { CommentsModule } from './comments/comments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import * as process from 'process';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import * as process from 'process';
       synchronize: false,
       logging: false,
     }),
+    EventEmitterModule.forRoot(),
     CommonModule,
     TasksModule,
     ProjectsModule,

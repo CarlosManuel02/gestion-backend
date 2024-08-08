@@ -11,6 +11,7 @@ import {
   UseGuards,
   UploadedFile,
   UseInterceptors,
+  Sse,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
@@ -20,6 +21,7 @@ import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { map } from 'rxjs';
 
 @Controller('auth')
 export class AuthController {
@@ -57,10 +59,7 @@ export class AuthController {
 
   @UseGuards(AuthGuard())
   @Patch('/update/:id')
-  update(
-    @Param('id') id: string,
-    @Body() updateAuthDto: UpdateAuthDto,
-  ) {
+  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
     return this.authService.update(id, updateAuthDto);
   }
 
@@ -83,5 +82,10 @@ export class AuthController {
   @Patch('reset-password')
   resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Sse('events')
+  sse() {
+    return this.authService.getWelcome().pipe(map((data) => ({ data })));
   }
 }

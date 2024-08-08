@@ -9,6 +9,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { CommonModule } from '../common/common.module';
 import { LogsModule } from '../common/logs/logs.module';
 import { ConfigModule } from '@nestjs/config';
+import {EventEmitterModule} from "@nestjs/event-emitter";
 
 @Module({
   imports: [
