@@ -118,7 +118,10 @@ export class ProjectsService {
         `SELECT *
          FROM get_all_projects_from_user('${term}')`,
       );
-      return projects;
+      return {
+        status: 200,
+        data: projects,
+      };
     } catch (error) {
       throw new NotFoundException('No projects found');
     }

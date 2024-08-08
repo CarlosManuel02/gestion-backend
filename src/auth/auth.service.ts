@@ -16,15 +16,20 @@ import { JwtService } from '@nestjs/jwt';
 import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { LogsService } from '../common/logs/logs.service';
+import {EventEmitter2, OnEvent} from '@nestjs/event-emitter';
+import {Subject} from "rxjs";
+import {Notification} from "../notifications/entities/notification.entity";
 
 @Injectable()
 export class AuthService {
+  private welcomwe$ = new Subject<User>();
   constructor(
     @InjectRepository(User)
     private readonly authRepository: Repository<User>,
     private readonly datasource: DataSource,
     private readonly jwtService: JwtService,
     public readonly logService: LogsService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(createAuthDto: CreateAuthDto) {
@@ -161,8 +166,8 @@ export class AuthService {
       const token = await this.generateJWT(user);
       await this.authRepository.save(user).then(async (user) => {
         const log = await this.logService.create(user.id, 'User logged in');
-        console.log('Log created', log);
       });
+      this.eventEmitter.emit('user.logged', user);
       return {
         user: {
           id: user.id,
@@ -179,6 +184,14 @@ export class AuthService {
     }
   }
 
+  @OnEvent('user.logged')
+  async userLogged(user: User) {
+    this.welcomwe$.next(user);
+  }
+
+  getWelcome() {
+    return this.welcomwe$.asObservable();
+  }
   async renewToken(token: string) {
     const payload = await this.jwtService.verify(token, {
       secret: process.env.JWT_SECRET,
@@ -191,6 +204,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
+        created_at: user.created_at,
       },
       token: newToken,
       status: 200,

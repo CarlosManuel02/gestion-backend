@@ -29,6 +29,8 @@ CREATE TABLE Users
     username               VARCHAR NOT NULL,
     email                  VARCHAR NOT NULL,
     password               VARCHAR NOT NULL,
+    created_at             TIMESTAMP DEFAULT now(),
+    updated_at             TIMESTAMP DEFAULT now(),
     salt                   VARCHAR NOT NULL,
     reset_password_token   VARCHAR,
     reset_password_expires TIMESTAMP
@@ -441,6 +443,26 @@ FROM tasks t
 WHERE t.project_id = project_id_param;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Function to get the user details
+DROP FUNCTION IF EXISTS get_user_details(UUID, VARCHAR);
+create function get_user_details(user_id_param uuid, user_email_param character varying)
+    returns TABLE(id uuid, username character varying, email character varying, created_at timestamp)
+    language plpgsql
+as
+$$
+BEGIN
+    RETURN QUERY
+        SELECT u.id        AS id,
+               u.username  AS username,
+               u.email     AS email,
+               u.created_at AS created_at
+
+        FROM Users u
+        WHERE u.id = user_id_param
+           OR u.email = user_email_param;
+END;
+$$;
 
 -- Function to get all tasks from a user
 DROP FUNCTION IF EXISTS get_all_tasks_from_user(UUID, VARCHAR);

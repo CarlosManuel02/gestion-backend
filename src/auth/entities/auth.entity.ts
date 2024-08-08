@@ -21,6 +21,11 @@ export class User {
   })
   password: string;
 
+  @Column('timestamp', {
+    nullable: false,
+  })
+  created_at: Date;
+
   @Column('varchar', {
     nullable: false,
   })
