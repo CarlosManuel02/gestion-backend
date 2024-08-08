@@ -444,6 +444,26 @@ WHERE t.project_id = project_id_param;
 END;
 $$ LANGUAGE plpgsql;
 
+-- Function to get the user details
+DROP FUNCTION IF EXISTS get_user_details(UUID, VARCHAR);
+create function get_user_details(user_id_param uuid, user_email_param character varying)
+    returns TABLE(id uuid, username character varying, email character varying, created_at timestamp)
+    language plpgsql
+as
+$$
+BEGIN
+    RETURN QUERY
+        SELECT u.id        AS id,
+               u.username  AS username,
+               u.email     AS email,
+               u.created_at AS created_at
+
+        FROM Users u
+        WHERE u.id = user_id_param
+           OR u.email = user_email_param;
+END;
+$$;
+
 -- Function to get all tasks from a user
 DROP FUNCTION IF EXISTS get_all_tasks_from_user(UUID, VARCHAR);
 CREATE OR REPLACE FUNCTION get_all_tasks_from_user(user_id_param UUID, user_email_param VARCHAR)
