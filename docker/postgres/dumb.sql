@@ -29,6 +29,8 @@ CREATE TABLE Users
     username               VARCHAR NOT NULL,
     email                  VARCHAR NOT NULL,
     password               VARCHAR NOT NULL,
+    created_at             TIMESTAMP DEFAULT now(),
+    updated_at             TIMESTAMP DEFAULT now(),
     salt                   VARCHAR NOT NULL,
     reset_password_token   VARCHAR,
     reset_password_expires TIMESTAMP

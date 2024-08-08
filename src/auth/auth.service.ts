@@ -204,6 +204,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
+        created_at: user.created_at,
       },
       token: newToken,
       status: 200,
