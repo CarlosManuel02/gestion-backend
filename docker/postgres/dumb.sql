@@ -31,6 +31,7 @@ CREATE TABLE Users
     password               VARCHAR NOT NULL,
     created_at             TIMESTAMP DEFAULT now(),
     updated_at             TIMESTAMP DEFAULT now(),
+    token                  VARCHAR,
     salt                   VARCHAR NOT NULL,
     reset_password_token   VARCHAR,
     reset_password_expires TIMESTAMP
@@ -451,7 +452,7 @@ $$ LANGUAGE plpgsql;
 -- Function to get the user details
 DROP FUNCTION IF EXISTS get_user_details(UUID, VARCHAR);
 create function get_user_details(user_id_param uuid, user_email_param character varying)
-    returns TABLE(id uuid, username character varying, email character varying, created_at timestamp)
+    returns TABLE(id uuid, username character varying, email character varying, created_at timestamp, token character varying)
     language plpgsql
 as
 $$
@@ -460,7 +461,9 @@ BEGIN
         SELECT u.id        AS id,
                u.username  AS username,
                u.email     AS email,
-               u.created_at AS created_at
+               u.created_at AS created_at,
+               u.token     AS token
+
 
         FROM Users u
         WHERE u.id = user_id_param
