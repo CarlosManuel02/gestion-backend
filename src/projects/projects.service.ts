@@ -146,7 +146,9 @@ export class ProjectsService {
   }
 
   async updateProjectRepo(project_id: string, repo: string) {
-    const project = await this.projectRepository.findOne({ where: { id: project_id } });
+    const project = await this.projectRepository.findOne({
+      where: { id: project_id },
+    });
     if (!project) {
       return {
         message: `Project with id ${project_id} not found`,
@@ -366,10 +368,9 @@ export class ProjectsService {
     }
 
     try {
-      await this.projectMenbersRepository.delete({
-        user_id: addMemberDto.id,
-        project_id: addMemberDto.project_id,
-      });
+      await this.projectMenbersRepository.query(
+        `SELECT * FROM remove_project_member('${addMemberDto.project_id}', '${addMemberDto.id}')`,
+      );
       return {
         status: 200,
         message: `Member with id ${addMemberDto.id} removed from project with id ${addMemberDto.project_id}`,
