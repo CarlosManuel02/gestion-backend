@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -58,9 +59,9 @@ export class ProjectsController {
     return this.projectsService.getProjetTasks(projectId);
   }
 
-  @Get('all/:term')
-  findAll(@Param('term') term: string) {
-    return this.projectsService.findAll(term);
+  @Get('all/:userID')
+  findAll(@Param('userID') userID: string, @Query('search') search?: string) {
+    return this.projectsService.findAll(userID, search);
   }
 
   @Get(':term')

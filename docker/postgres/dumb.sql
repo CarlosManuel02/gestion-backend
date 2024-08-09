@@ -330,7 +330,7 @@ $$ LANGUAGE plpgsql;
 
 -- Function to get all projects from a user
 DROP FUNCTION IF EXISTS get_all_projects_from_user(UUID);
-CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID)
+CREATE OR REPLACE FUNCTION get_all_projects_from_user(user_id_param UUID, like_project_name_param VARCHAR)
     RETURNS TABLE
             (
                 project_id          UUID,
@@ -376,10 +376,14 @@ FROM projects p
          JOIN Users u ON p.owner = u.id
          LEFT JOIN project_repositories pr ON p.id = pr.project_id
          LEFT JOIN project_members pm ON p.id = pm.project_id
-WHERE pm.user_id = user_id_param
+WHERE (pm.user_id = user_id_param OR u.id = user_id_param)
+  AND (like_project_name_param IS NULL
+       OR like_project_name_param = ''
+       OR p.name ILIKE '%' || like_project_name_param || '%')
 GROUP BY p.id, u.username, u.email, pr.url;
 END;
 $$ LANGUAGE plpgsql;
+
 
 -- Function to get all tasks from a project
 DROP FUNCTION IF EXISTS get_all_tasks_from_project(UUID);

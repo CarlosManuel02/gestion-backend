@@ -112,17 +112,26 @@ export class ProjectsService {
     });
   }
 
-  async findAll(term: string) {
+  async findAll(term: string, like: string) {
+    let projects: Project[];
     try {
-      const projects = await this.projectRepository.query(
-        `SELECT *
-         FROM get_all_projects_from_user('${term}')`,
-      );
+      if (like){
+        projects = await this.projectRepository.query(
+          `SELECT *
+         FROM get_all_projects_from_user('${term}', '${like}')`,
+        );
+      } else {
+        projects = await this.projectRepository.query(
+          `SELECT *
+         FROM get_all_projects_from_user('${term}', NULL)`,
+        );
+      }
       return {
         status: 200,
         data: projects,
       };
     } catch (error) {
+      console.log(error);
       throw new NotFoundException('No projects found');
     }
   }
