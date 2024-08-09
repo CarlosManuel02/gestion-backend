@@ -133,7 +133,10 @@ export class AuthService {
     await queryRunner.commitTransaction();
     await queryRunner.release();
 
-    return user;
+    return {
+      message: 'User updated successfully',
+      status: 200,
+    };
   }
 
   async remove(id: string) {
