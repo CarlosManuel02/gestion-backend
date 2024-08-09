@@ -136,7 +136,7 @@ CREATE TABLE tasks
     creation_date DATE         NOT NULL,
     deadline      DATE,
     priority      INTEGER      NOT NULL,
-    assignment    UUID REFERENCES Users (id),
+    assignment    UUID REFERENCES Users (id) ON DELETE SET NULL,
     project_id    UUID REFERENCES projects (id)
 );
 
@@ -463,6 +463,18 @@ BEGIN
            OR u.email = user_email_param;
 END;
 $$;
+
+-- Function remove a project member
+DROP FUNCTION IF EXISTS remove_project_member(UUID, UUID);
+CREATE OR REPLACE FUNCTION remove_project_member(project_id_param UUID, user_id_param UUID)
+    RETURNS BOOLEAN
+AS
+$$
+BEGIN
+    DELETE FROM project_members WHERE project_id = project_id_param AND user_id = user_id_param;
+    RETURN TRUE;
+END
+$$ LANGUAGE plpgsql;
 
 -- Function to get all tasks from a user
 DROP FUNCTION IF EXISTS get_all_tasks_from_user(UUID, VARCHAR);
