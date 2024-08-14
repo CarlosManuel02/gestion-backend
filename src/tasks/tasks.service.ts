@@ -19,7 +19,7 @@ export class TasksService {
   }
 
   async create(createTaskDto: CreateTaskDto) {
-    const {user} = await this.authService.findBy(createTaskDto.assignment);
+    const { user } = await this.authService.findBy(createTaskDto.assignment);
     if (!user) {
       return {
         message: 'The user does not exist',
@@ -53,7 +53,7 @@ export class TasksService {
     }
   }
 
-  async findAllFromUser(term: string) {
+  async  (term: string) {
     try {
       if (isUUID(term)) {
         const tasks = await this.taskRepository.query(
