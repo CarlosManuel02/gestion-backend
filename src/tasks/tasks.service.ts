@@ -53,7 +53,7 @@ export class TasksService {
     }
   }
 
-  async  (term: string) {
+  async findAllFromUser(term: string) {
     try {
       if (isUUID(term)) {
         const tasks = await this.taskRepository.query(
